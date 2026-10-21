@@ -21,6 +21,7 @@
       font-family: 'Outfit', sans-serif;
       background: radial-gradient(circle at 50% 15%, #201308 0%, #0c0805 65%, #050302 100%);
       min-height: 100vh;
+      min-height: 100dvh;
       color: #f7eed8;
       overflow-x: hidden;
       touch-action: manipulation;
@@ -42,7 +43,7 @@
     .wood-counter {
       background: linear-gradient(180deg, #422414 0%, #2b170c 50%, #170b04 100%);
       box-shadow: inset 0 6px 10px rgba(255, 255, 255, 0.08), 0 -8px 25px rgba(0, 0, 0, 0.85);
-      border-top: 3px solid #78350f;
+      border-top: 2px solid #78350f;
     }
 
     /* Effets d'ébriété dynamiques */
@@ -50,6 +51,7 @@
       transition: filter 0.3s ease, transform 0.4s ease;
       transform-origin: center center;
       width: 100%;
+      height: 100dvh;
     }
 
     @keyframes drunkenSway {
@@ -113,64 +115,83 @@
       animation: nauseousShake 0.45s ease-in-out infinite;
     }
 
+    /* Empêcher tout conflit tactile sur le bouton */
     .touch-target {
       touch-action: none !important;
       -webkit-user-select: none !important;
       user-select: none !important;
     }
+
+    /* Barre scrollable compacte personnalisée */
+    .drink-chips-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+    .drink-chips-scroll::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    .drink-chips-scroll::-webkit-scrollbar-thumb {
+      background: rgba(245, 158, 11, 0.3);
+      border-radius: 4px;
+    }
   </style>
 </head>
-<body class="flex flex-col justify-between min-h-screen">
+<body class="flex flex-col justify-between min-h-screen min-h-[100dvh]">
 
-  <div id="game-viewport" class="w-full flex-1 flex flex-col justify-between">
+  <!-- Viewport englobant l'ivresse visuelle -->
+  <div id="game-viewport" class="w-full flex-1 flex flex-col justify-between overflow-hidden">
 
-    <!-- En-tête : Taux d'alcool & compteurs -->
-    <header class="w-full px-3 sm:px-6 pt-3 pb-2 max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 border-b border-amber-900/40">
-      <div class="flex items-center gap-2.5">
-        <span class="text-3xl filter drop-shadow">🍻</span>
+    <!-- En-tête compacte : Taux d'alcool & compteurs -->
+    <header class="w-full px-3 pt-2 pb-1.5 max-w-5xl mx-auto flex items-center justify-between gap-2 border-b border-amber-900/40 shrink-0">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl filter drop-shadow">🍻</span>
         <div>
-          <h1 class="text-xl sm:text-2xl font-black font-serif-title tracking-wide text-amber-300 neon-text">Le Dernier Verre</h1>
-          <p class="text-[10px] sm:text-xs text-amber-400/70 tracking-widest uppercase">Épreuve d'Alcoolémie Virtuelle</p>
+          <h1 class="text-base sm:text-xl font-black font-serif-title tracking-wide text-amber-300 neon-text leading-tight">Le Dernier Verre</h1>
+          <p class="text-[9px] text-amber-400/70 tracking-widest uppercase hidden xs:block">Épreuve d'Alcoolémie</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3 sm:gap-5 bg-stone-900/90 backdrop-blur px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl border border-amber-800/50 shadow-inner">
+      <!-- Taux d'Alcool mis en valeur comme métrique centrale -->
+      <div class="flex items-center gap-2 sm:gap-4 bg-stone-900/90 backdrop-blur px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-amber-800/50 shadow-inner">
         <div class="text-center">
-          <div class="text-[10px] uppercase font-bold text-amber-500/80">Verres bus</div>
-          <div id="glasses-count" class="text-xl sm:text-2xl font-black text-white">0</div>
+          <div class="text-[9px] uppercase font-bold text-amber-500/80">Verres</div>
+          <div id="glasses-count" class="text-sm sm:text-lg font-black text-white">0</div>
         </div>
-        <div class="h-8 w-px bg-amber-900/70"></div>
+        <div class="h-6 w-px bg-amber-900/70"></div>
         <div class="text-center">
-          <div class="text-[10px] uppercase font-bold text-rose-400">Taux d'Alcool (Score)</div>
-          <div id="bac-count" class="text-xl sm:text-3xl font-black text-rose-400 font-mono tracking-tight">0.00 <span class="text-xs font-semibold">g/L</span></div>
+          <div class="text-[9px] uppercase font-bold text-rose-400">Taux (Score)</div>
+          <div id="bac-count" class="text-sm sm:text-lg font-black text-rose-400 font-mono tracking-tight">0.00 <span class="text-[10px] font-semibold">g/L</span></div>
         </div>
-        <div class="h-8 w-px bg-amber-900/70"></div>
+        <div class="h-6 w-px bg-amber-900/70"></div>
         <div class="text-center">
-          <div class="text-[10px] uppercase font-bold text-amber-500/80">Vitesse déglutition</div>
-          <div id="speed-indicator" class="text-xs sm:text-sm font-bold text-amber-300">100% (Rapide)</div>
+          <div class="text-[9px] uppercase font-bold text-amber-500/80">Vitesse</div>
+          <div id="speed-indicator" class="text-[10px] sm:text-xs font-bold text-amber-300">100%</div>
         </div>
       </div>
     </header>
 
-    <!-- Zone Centrale -->
-    <main class="w-full max-w-4xl mx-auto px-3 sm:px-4 py-3 flex-1 flex flex-col items-center justify-center">
+    <!-- Zone Centrale : Hauteur optimisée pour tenir sur 1 seul écran -->
+    <main class="w-full max-w-4xl mx-auto px-2 sm:px-4 py-1 flex-1 flex flex-col items-center justify-between min-h-0">
 
-      <div class="w-full mb-3 sm:mb-4">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-400/90">
-            Carte des boissons (classées par g/L croissant)
+      <!-- Sélecteur de boissons compact : Défilement horizontal fluide sur mobile / grille sur tablette/PC -->
+      <div class="w-full shrink-0">
+        <div class="flex items-center justify-between mb-1 px-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400/90">
+            Boissons (ordre croissant en g/L)
           </span>
-          <span class="text-[10px] text-amber-200/50 italic">De la plus douce à la plus forte</span>
+          <span class="text-[9px] text-amber-200/50 italic">Glissez ➔</span>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2" id="drink-selector"></div>
+        <div class="drink-chips-scroll flex sm:grid sm:grid-cols-6 gap-1.5 overflow-x-auto pb-1 px-0.5 no-scrollbar" id="drink-selector">
+          <!-- Rempli par JavaScript sous forme de capsules compactes -->
+        </div>
       </div>
 
-      <!-- Verre interactif SVG -->
-      <div class="relative w-48 h-64 sm:w-60 sm:h-72 flex items-center justify-center">
-        <div id="drink-glow" class="absolute inset-0 rounded-full blur-3xl opacity-35 transition-all duration-700 bg-amber-500"></div>
+      <!-- Verre interactif SVG compacté -->
+      <div class="relative w-32 h-36 xs:w-36 xs:h-44 sm:w-44 sm:h-52 flex items-center justify-center my-auto shrink-0">
+        <!-- Halo lumineux d'ambiance -->
+        <div id="drink-glow" class="absolute inset-0 rounded-full blur-2xl opacity-35 transition-all duration-700 bg-amber-500"></div>
 
-        <svg class="w-full h-full drop-shadow-2xl overflow-visible" viewBox="0 0 200 250">
+        <svg class="w-full h-full drop-shadow-xl overflow-visible" viewBox="0 0 200 250">
           <defs>
             <clipPath id="glass-inner-clip">
               <polygon points="45,40 155,40 142,205 58,205" />
@@ -228,73 +249,75 @@
             <path id="liquid-wave-path" class="liquid-wave" d="M 0,0 Q 20,6 40,0 T 80,0 T 120,0 T 160,0 T 200,0 V 20 H 0 Z" fill="rgba(255,255,255,0.3)" transform="translate(0, 40)"/>
           </g>
 
-          <!-- Paroi en verre -->
+          <!-- Paroi extérieure en verre avec réflexion -->
           <polygon points="44,38 156,38 143,207 57,207" fill="url(#glassReflect)" stroke="rgba(255, 255, 255, 0.45)" stroke-width="3" />
           <ellipse cx="100" cy="38" rx="56" ry="7" fill="none" stroke="rgba(255, 255, 255, 0.65)" stroke-width="2.5" />
         </svg>
 
-        <div id="drink-percent-text" class="absolute bottom-5 font-mono text-sm tracking-widest font-black text-amber-200/90 bg-stone-950/80 px-3 py-1 rounded-full border border-amber-500/40 backdrop-blur">
+        <!-- Pourcentage liquide restant -->
+        <div id="drink-percent-text" class="absolute -bottom-1 font-mono text-xs tracking-wider font-black text-amber-200/90 bg-stone-950/85 px-2.5 py-0.5 rounded-full border border-amber-500/40 backdrop-blur">
           100%
         </div>
       </div>
 
-      <!-- Description de la boisson sélectionnée -->
-      <div class="mt-2 text-center">
-        <h3 id="current-drink-name" class="text-lg sm:text-xl font-bold text-amber-300">Bière Blonde</h3>
-        <p id="current-drink-desc" class="text-xs text-amber-200/70 max-w-sm mx-auto">
+      <!-- Description dynamique du verre en main compacte -->
+      <div class="text-center shrink-0 my-0.5">
+        <h3 id="current-drink-name" class="text-sm sm:text-base font-bold text-amber-300 leading-tight">Bière Blonde</h3>
+        <p id="current-drink-desc" class="text-[10px] sm:text-xs text-amber-200/70 max-w-sm mx-auto leading-tight truncate">
           Fraîche avec mousse onctueuse (+0.20 g/L).
         </p>
       </div>
 
-      <!-- Alerte Nausée -->
-      <div id="nausea-alert" class="w-full max-w-sm mt-3 p-3 rounded-2xl bg-rose-950/90 border-2 border-rose-500 text-rose-200 text-center hidden">
-        <div class="flex items-center justify-center gap-2 font-black text-sm text-rose-300">
-          <span class="text-2xl shake-nausea">🤢</span>
+      <!-- Alerte Nausée / Refus de boire -->
+      <div id="nausea-alert" class="w-full max-w-sm p-2 rounded-xl bg-rose-950/95 border border-rose-500 text-rose-200 text-center hidden shrink-0 my-1 shadow-lg">
+        <div class="flex items-center justify-center gap-1.5 font-black text-xs text-rose-300">
+          <span class="text-lg shake-nausea">🤢</span>
           <span>ESTOMAC EN SURCHAUFFE ! REFUS DE BOIRE !</span>
         </div>
-        <p class="text-[11px] text-rose-300/80 mt-1">Deux culs-secs enchaînés ! Pause digestion obligatoire...</p>
-        <div class="w-full bg-stone-900 rounded-full h-2.5 mt-2 overflow-hidden border border-rose-500/40">
-          <div id="cooldown-bar" class="bg-gradient-to-r from-rose-500 to-amber-500 h-2.5 rounded-full transition-all duration-100" style="width: 100%"></div>
+        <div class="w-full bg-stone-900 rounded-full h-2 mt-1.5 overflow-hidden border border-rose-500/40">
+          <div id="cooldown-bar" class="bg-gradient-to-r from-rose-500 to-amber-500 h-2 rounded-full transition-all duration-100" style="width: 100%"></div>
         </div>
-        <div id="cooldown-timer-text" class="text-xs font-mono font-bold mt-1 text-rose-200">Pause : 7.0s</div>
+        <div id="cooldown-timer-text" class="text-[11px] font-mono font-bold mt-0.5 text-rose-200">Pause : 7.0s</div>
       </div>
 
-      <!-- Boutons d'interaction -->
-      <div class="w-full max-w-sm mt-4 flex flex-col items-center gap-3">
+      <!-- Zone de contrôle interactive : Boire & Sauvegarder (Toujours visible sans scroll) -->
+      <div class="w-full max-w-sm flex flex-col items-center gap-1.5 sm:gap-2.5 shrink-0 pb-1">
+        <!-- Bouton MAINTENIR POUR BOIRE (Optimisé tactile) -->
         <button id="btn-drink" 
-                class="touch-target btn-drink-pulse w-full py-4 sm:py-5 px-6 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-500 text-white font-black text-lg sm:text-2xl uppercase tracking-wider shadow-2xl border-2 border-amber-300/40 cursor-pointer transition duration-150 transform">
-          <span class="flex items-center justify-center gap-2 sm:gap-3 pointer-events-none">
-            <span id="drink-icon-btn" class="text-2xl">🍺</span>
+                class="touch-target btn-drink-pulse w-full py-3 sm:py-4 px-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-500 text-white font-black text-base sm:text-xl uppercase tracking-wider shadow-xl border-2 border-amber-300/40 cursor-pointer transition duration-150 transform">
+          <span class="flex items-center justify-center gap-2 pointer-events-none">
+            <span id="drink-icon-btn" class="text-xl sm:text-2xl">🍺</span>
             <span id="drink-text-btn">Maintenir pour Boire</span>
           </span>
         </button>
 
+        <!-- Rangée boutons d'action : Top 10 + Arrêter & Enregistrer -->
         <div class="w-full flex gap-2">
           <button id="btn-top10-main" 
-                  class="py-3 px-3 sm:px-4 rounded-xl bg-amber-950/90 hover:bg-amber-900 border border-amber-500/60 text-amber-300 font-bold text-xs sm:text-sm transition duration-200 flex items-center justify-center gap-1.5 shadow-lg cursor-pointer shrink-0">
+                  class="py-2.5 sm:py-3 px-3 rounded-xl bg-amber-950/90 hover:bg-amber-900 border border-amber-500/60 text-amber-300 font-bold text-xs sm:text-sm transition duration-200 flex items-center justify-center gap-1.5 shadow-md cursor-pointer shrink-0">
             <span>🏆</span>
             <span>Top 10</span>
           </button>
           <button id="btn-stop-save" 
-                  class="flex-1 py-3 px-3 sm:px-4 rounded-xl bg-stone-900/90 hover:bg-stone-800 border border-rose-500/50 hover:border-rose-400 text-rose-300 font-bold text-xs sm:text-sm transition duration-200 flex items-center justify-center gap-1.5 shadow-lg cursor-pointer">
+                  class="flex-1 py-2.5 sm:py-3 px-3 rounded-xl bg-stone-900/90 hover:bg-stone-800 border border-rose-500/50 hover:border-rose-400 text-rose-300 font-bold text-xs sm:text-sm transition duration-200 flex items-center justify-center gap-1.5 shadow-md cursor-pointer">
             <span>🛑</span>
-            <span>Enregistrer mon taux (g/L)</span>
+            <span class="truncate">Enregistrer mon taux (g/L)</span>
           </button>
         </div>
       </div>
 
     </main>
 
-    <!-- Comptoir du bas -->
-    <footer class="wood-counter w-full pt-3 pb-4 px-4">
-      <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-300/80">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Comptoir ouvert • Cul-sec consécutif = 7s de refus</span>
+    <!-- Comptoir du bas ultra compact -->
+    <footer class="wood-counter w-full py-1.5 px-3 shrink-0">
+      <div class="max-w-4xl mx-auto flex items-center justify-between text-[10px] sm:text-xs text-amber-300/80">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Cul-sec consécutif = 7s refus</span>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
           <button id="btn-show-scores" class="hover:text-amber-100 underline font-semibold cursor-pointer">
-            🏆 Top 10 des Taux (g/L)
+            🏆 Top 10
           </button>
           <span>•</span>
           <button id="btn-sound-toggle" class="hover:text-amber-100 cursor-pointer">
@@ -306,7 +329,7 @@
 
   </div>
 
-  <!-- MODAL : Enregistrement du Taux -->
+  <!-- MODAL : Enregistrement du Taux d'Alcool (Pseudo max 20 car.) -->
   <div id="modal-save" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="w-full max-w-md bg-stone-900 border-2 border-rose-500/70 rounded-3xl p-5 sm:p-7 shadow-2xl relative">
       <div class="text-center mb-4">
@@ -317,6 +340,7 @@
         </p>
       </div>
 
+      <!-- Bilan du test d'alcoolémie -->
       <div class="bg-stone-950/80 rounded-2xl p-4 mb-4 border border-rose-900/50 flex justify-around text-center">
         <div>
           <div class="text-[10px] uppercase text-stone-400 font-bold">Verres bus</div>
@@ -334,6 +358,7 @@
         </div>
       </div>
 
+      <!-- Formulaire avec Pseudo limité à 20 caractères -->
       <form id="form-save-score" onsubmit="return false;" class="space-y-4">
         <div>
           <div class="flex justify-between items-center mb-1">
@@ -366,7 +391,7 @@
     </div>
   </div>
 
-  <!-- MODAL : Top 10 -->
+  <!-- MODAL : Panthéon des Taux d'Alcoolémie (g/L) -->
   <div id="modal-leaderboard" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="w-full max-w-lg bg-stone-900 border-2 border-rose-500/70 rounded-3xl p-5 sm:p-7 shadow-2xl relative max-h-[90vh] flex flex-col">
       <div class="flex justify-between items-center pb-3 border-b border-amber-900/50">
@@ -380,9 +405,13 @@
         <button id="btn-close-leaderboard" class="text-stone-400 hover:text-white text-2xl font-bold cursor-pointer p-1">✕</button>
       </div>
 
+      <!-- Liste des 10 meilleurs scores classés par g/L décroissant -->
       <div id="leaderboard-list" class="flex-1 overflow-y-auto py-3 space-y-2 my-2 pr-1"></div>
 
-      <div class="pt-3 border-t border-amber-900/50 flex justify-end items-center gap-3">
+      <div class="pt-3 border-t border-amber-900/50 flex justify-between items-center gap-3">
+        <button id="btn-clear-scores" class="text-xs text-stone-400 hover:text-rose-400 underline cursor-pointer">
+          Vider l'historique
+        </button>
         <button id="btn-new-game" class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm shadow transition cursor-pointer">
           Remettre la table à zéro 🍻
         </button>
@@ -396,15 +425,16 @@
   </div>
 
   <script>
-    const API_URL = "https://api-bar-challenge.kjh27r4i-70a.workers.dev";
-
+    /* ==========================================================================
+       1. BOISSONS CLASSÉES STRICTEMENT PAR ORDRE CROISSANT DE g/L
+       ========================================================================== */
     const DRINKS = [
       {
         id: 'beer',
         name: 'Bière Blonde',
         icon: '🍺',
-        alcohol: 0.20,
-        baseDuration: 1300,
+        alcohol: 0.20, // 1ère: 0.20 g/L
+        baseDuration: 1300, // Temps de base à 0 g/L (ms)
         desc: 'Fraîche et légère avec mousse généreuse (+0.20 g/L)',
         colors: { stop1: '#f59e0b', stop2: '#fcd34d', stop3: '#d97706', glow: 'rgba(245, 158, 11, 0.45)' },
         hasFoam: true,
@@ -414,7 +444,7 @@
         id: 'rose_wine',
         name: 'Vin Rosé',
         icon: '🌸',
-        alcohol: 0.25,
+        alcohol: 0.25, // 2ème: 0.25 g/L
         baseDuration: 1400,
         desc: 'Frais, fruité et printanier (+0.25 g/L)',
         colors: { stop1: '#fb7185', stop2: '#fecdd3', stop3: '#f43f5e', glow: 'rgba(251, 113, 133, 0.45)' },
@@ -425,7 +455,7 @@
         id: 'white_wine',
         name: 'Vin Blanc',
         icon: '🥂',
-        alcohol: 0.26,
+        alcohol: 0.26, // 3ème: 0.26 g/L
         baseDuration: 1450,
         desc: 'Sec, vif et éclatant d\'or pâle (+0.26 g/L)',
         colors: { stop1: '#fef08a', stop2: '#fef9c3', stop3: '#eab308', glow: 'rgba(250, 204, 21, 0.4)' },
@@ -436,7 +466,7 @@
         id: 'red_wine',
         name: 'Vin Rouge',
         icon: '🍷',
-        alcohol: 0.28,
+        alcohol: 0.28, // 4ème: 0.28 g/L
         baseDuration: 1550,
         desc: 'Robe rubis foncé et tanins ronds (+0.28 g/L)',
         colors: { stop1: '#881337', stop2: '#9f1239', stop3: '#4c0519', glow: 'rgba(159, 18, 57, 0.5)' },
@@ -447,7 +477,7 @@
         id: 'whisky_cola',
         name: 'Whisky Coca',
         icon: '🥃',
-        alcohol: 0.35,
+        alcohol: 0.35, // 5ème: 0.35 g/L
         baseDuration: 1650,
         desc: 'Ambré puissant et servi bien frais (+0.35 g/L)',
         colors: { stop1: '#451a03', stop2: '#78350f', stop3: '#291004', glow: 'rgba(120, 53, 15, 0.5)' },
@@ -458,7 +488,7 @@
         id: 'vodka_redbull',
         name: 'Vodka Redbull',
         icon: '⚡',
-        alcohol: 0.42,
+        alcohol: 0.42, // 6ème: 0.42 g/L
         baseDuration: 1750,
         desc: 'Pétillant, caféiné et coup de fouet redoutable (+0.42 g/L)',
         colors: { stop1: '#0284c7', stop2: '#38bdf8', stop3: '#0369a1', glow: 'rgba(2, 132, 199, 0.5)' },
@@ -467,9 +497,12 @@
       }
     ];
 
+    /* ==========================================================================
+       2. ÉTAT DU JEU
+       ========================================================================== */
     let currentDrinkIndex = 0;
     let glassesDrunk = 0;
-    let bloodAlcohol = 0.00;
+    let bloodAlcohol = 0.00; // En g/L (Le Score réel du jeu)
     let drinkCounts = { beer: 0, rose_wine: 0, white_wine: 0, red_wine: 0, whisky_cola: 0, vodka_redbull: 0 };
 
     let isDrinking = false;
@@ -478,13 +511,15 @@
     let animationFrameId = null;
     let soundEnabled = true;
 
+    // Détection de cul-sec indépendante de la vitesse de déglutition :
+    // Un verre bu sans relâcher la touche/tactile = cul-sec avéré.
+    // Si on termine deux verres avec un repos inter-verres trop court, refus garanti.
     let releasesCountDuringGlass = 0;
     let consecutiveChugStreak = 0;
     let lastDrinkFinishTimestamp = 0;
     let isStomachLocked = false;
     let stomachCooldownTimer = null;
-    const NAUSEA_LOCKOUT_MS = 7000;
-
+    const NAUSEA_LOCKOUT_MS = 7000; // 7 secondes complètes de refus de boire
     class BarAudioEngine {
       constructor() {
         this.ctx = null;
@@ -503,6 +538,7 @@
         }
       }
 
+      // La fréquence des glou-glous ralentit lorsque le taux d'alcool augmente
       startGlug(intervalMs) {
         if (!soundEnabled) return;
         this.init();
@@ -529,6 +565,7 @@
           const gain = this.ctx.createGain();
           const now = this.ctx.currentTime;
 
+          // Son plus grave et lourd quand on a beaucoup bu
           const pitchFactor = Math.max(0.65, 1.0 - (bloodAlcohol * 0.08));
           const baseFreq = (210 + Math.random() * 60) * pitchFactor;
 
@@ -547,6 +584,7 @@
         } catch (e) {}
       }
 
+      // Tintement de verre de fin
       playCheer() {
         if (!this.ctx || !soundEnabled) return;
         this.init();
@@ -567,6 +605,7 @@
         } catch (e) {}
       }
 
+      // Son de nausée / rot étouffé lors du blocage d'estomac
       playNauseaSound() {
         if (!this.ctx || !soundEnabled) return;
         this.init();
@@ -613,6 +652,9 @@
 
     const audio = new BarAudioEngine();
 
+    /* ==========================================================================
+       4. ÉLÉMENTS DOM
+       ========================================================================== */
     const dom = {
       viewport: document.getElementById('game-viewport'),
       glassesCount: document.getElementById('glasses-count'),
@@ -643,7 +685,6 @@
       playerNickname: document.getElementById('player-nickname'),
       charCounter: document.getElementById('char-counter'),
       btnCancelModal: document.getElementById('btn-cancel-modal'),
-      btnConfirmSave: document.getElementById('btn-confirm-save'),
       modalSummaryGlasses: document.getElementById('modal-summary-glasses'),
       modalSummaryBac: document.getElementById('modal-summary-bac'),
       modalSummaryFav: document.getElementById('modal-summary-fav'),
@@ -652,33 +693,37 @@
       btnShowScores: document.getElementById('btn-show-scores'),
       btnCloseLeaderboard: document.getElementById('btn-close-leaderboard'),
       btnNewGame: document.getElementById('btn-new-game'),
+      btnClearScores: document.getElementById('btn-clear-scores'),
       btnSoundToggle: document.getElementById('btn-sound-toggle'),
       soundStatus: document.getElementById('sound-status'),
       toast: document.getElementById('toast'),
       errorMessage: document.getElementById('error-message')
     };
 
+    /* ==========================================================================
+       5. LOGIQUE DES BOISSONS & RENDU
+       ========================================================================== */
     function renderDrinkSelector() {
       dom.drinkSelector.innerHTML = '';
       DRINKS.forEach((drink, idx) => {
         const btn = document.createElement('button');
         const isSelected = idx === currentDrinkIndex;
         btn.type = 'button';
-        btn.className = `p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer touch-manipulation ${
+        btn.className = `shrink-0 p-1.5 sm:p-2 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer touch-manipulation min-w-[105px] sm:min-w-0 ${
           isSelected 
-            ? 'bg-amber-950/80 border-rose-400 ring-2 ring-rose-400/50 shadow-lg' 
+            ? 'bg-amber-950/90 border-rose-400 ring-2 ring-rose-400/50 shadow-md' 
             : 'bg-stone-900/70 border-amber-900/40 hover:bg-stone-800 hover:border-amber-700/60'
         }`;
         btn.innerHTML = `
           <div class="flex items-center justify-between w-full">
-            <span class="text-xl sm:text-2xl">${drink.icon}</span>
-            <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-500/40">
-              +${drink.alcohol.toFixed(2)} g/L
+            <span class="text-base sm:text-xl">${drink.icon}</span>
+            <span class="text-[9px] font-black px-1 py-0.5 rounded bg-rose-950/90 text-rose-300 border border-rose-500/40">
+              +${drink.alcohol.toFixed(2)}
             </span>
           </div>
-          <div class="mt-1">
-            <div class="text-xs font-bold text-white truncate">${drink.name}</div>
-            <div class="text-[10px] text-amber-200/50">Rang #${idx + 1}</div>
+          <div class="mt-0.5">
+            <div class="text-[11px] font-bold text-white truncate leading-tight">${drink.name}</div>
+            <div class="text-[9px] text-amber-200/50">#${idx + 1}</div>
           </div>
         `;
 
@@ -716,7 +761,7 @@
 
     function resetGlassFill() {
       drinkProgress = 0.0;
-      releasesCountDuringGlass = 0;
+      releasesCountDuringGlass = 0; // Réinitialise les gorgées pour ce nouveau verre
       updateGlassHeight(0.0);
       dom.drinkPercentText.innerText = '100%';
     }
@@ -742,8 +787,15 @@
       }
     }
 
+    /* ==========================================================================
+       6. VITESSE ADAPTATIVE SELON LE TAUX D'ALCOOL (Ralentissement progressif)
+       ========================================================================== */
     function getCurrentDrinkDuration() {
       const drink = DRINKS[currentDrinkIndex];
+      // Ralentissement : chaque 1.0 g/L augmente la durée de consommation de 65%
+      // À 0 g/L -> x1.0 de durée (rapide)
+      // À 2 g/L -> x2.3 de durée
+      // À 4 g/L -> x3.6 de durée (très lent)
       const slowdownMultiplier = 1.0 + (bloodAlcohol * 0.65);
       return drink.baseDuration * slowdownMultiplier;
     }
@@ -760,8 +812,13 @@
       dom.speedIndicator.innerText = `${ratio}% (${label})`;
     }
 
+    /* ==========================================================================
+       7. MÉCANIQUE DU BOIRE & DÉTECTION DU REFUS (CUL-SEC INDÉPENDANT DE LA VITESSE)
+       ========================================================================== */
     function startDrinking(e) {
-      if (e && e.cancelable) e.preventDefault();
+      if (e && e.cancelable) {
+        e.preventDefault();
+      }
 
       if (isStomachLocked) {
         showToast('Estomac en surchauffe ! Pause de digestion obligatoire... 🤢');
@@ -776,6 +833,7 @@
       dom.btnDrink.classList.add('drinking-active');
       dom.drinkTextBtn.innerText = 'Déglutition en cours...';
 
+      // Fréquence du son de glou-glou ajustée à la vitesse actuelle
       const currentDuration = getCurrentDrinkDuration();
       const glugStep = Math.min(320, 150 * (currentDuration / DRINKS[currentDrinkIndex].baseDuration));
       audio.startGlug(glugStep);
@@ -793,6 +851,7 @@
         const percentLeft = Math.round((1 - drinkProgress) * 100);
         dom.drinkPercentText.innerText = `${percentLeft}%`;
 
+        // Verre terminé
         if (drinkProgress >= 1.0) {
           finishDrink();
           return;
@@ -813,6 +872,7 @@
       dom.drinkTextBtn.innerText = 'Maintenir pour Boire';
       audio.stopGlug();
 
+      // Si le verre n'était pas fini, le joueur a relâché -> ce n'est donc PAS un cul-sec strict en 1 seule traite
       if (drinkProgress < 1.0) {
         releasesCountDuringGlass++;
       }
@@ -830,6 +890,10 @@
       const timeSinceLastDrink = now - lastDrinkFinishTimestamp;
       lastDrinkFinishTimestamp = now;
 
+      // Définition d'un cul-sec :
+      // 1. Bu d'une seule traite sans jamais relâcher (releasesCountDuringGlass === 0),
+      // OU 2. Enchaîné avec moins de 4 secondes de pause par rapport au verre précédent.
+      // Cela fonctionne même si la déglutition a duré longtemps !
       const isCulSec = (releasesCountDuringGlass === 0) || (timeSinceLastDrink < 4000);
 
       if (isCulSec) {
@@ -843,6 +907,7 @@
       drinkCounts[drink.id]++;
       bloodAlcohol = parseFloat((bloodAlcohol + drink.alcohol).toFixed(2));
 
+      // Mise à jour de l'affichage principal
       dom.glassesCount.innerText = glassesDrunk;
       dom.bacCount.innerHTML = `${bloodAlcohol.toFixed(2)} <span class="text-xs font-semibold">g/L</span>`;
       updateSpeedIndicator();
@@ -850,6 +915,7 @@
       audio.playCheer();
       applyDrunkenEffects();
 
+      // Refus de boire déclenché dès 2 culs-secs consécutifs
       if (consecutiveChugStreak >= 2) {
         showToast(`Trop de cul-secs d'affilée ! Refus de boire pendant 7 secondes ! 🤢`);
         triggerNauseaLockout();
@@ -861,6 +927,7 @@
       }
     }
 
+    /* Déclenchement de la nausée et du temps d'attente obligatoire porté à 7 secondes */
     function triggerNauseaLockout() {
       isStomachLocked = true;
       consecutiveChugStreak = 0;
@@ -874,7 +941,7 @@
 
       dom.nauseaAlert.classList.remove('hidden');
 
-      const lockoutTotalMs = NAUSEA_LOCKOUT_MS;
+      const lockoutTotalMs = NAUSEA_LOCKOUT_MS; // 7000 ms
       const lockoutStart = performance.now();
 
       if (stomachCooldownTimer) clearInterval(stomachCooldownTimer);
@@ -903,6 +970,9 @@
       }, 50);
     }
 
+    /* ==========================================================================
+       8. EFFETS D'ÉBRIÉTÉ VISUELS
+       ========================================================================== */
     function applyDrunkenEffects() {
       if (bloodAlcohol === 0) {
         dom.viewport.style.filter = 'none';
@@ -922,6 +992,33 @@
 
       dom.viewport.style.filter = `blur(${blurAmount}px) saturate(${saturateAmount}%) contrast(106%)`;
       dom.viewport.classList.add('is-drunken');
+    }
+
+    /* ==========================================================================
+       9. GESTION DU SCORE (TAUX EN g/L) & LEADERBOARD LOCALSTORAGE
+       ========================================================================== */
+    const STORAGE_KEY = 'bar_game_bac_leaderboard_v2';
+
+    function getScores() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveScoreEntry(entry) {
+      try {
+        const scores = getScores();
+        scores.push(entry);
+        // Classement strictement par taux d'alcool (g/L) décroissant
+        scores.sort((a, b) => b.bac - a.bac || b.glasses - a.glasses);
+        // On conserve jusqu'à 30 entrées en stockage interne, le modal affichera le Top 10
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(scores.slice(0, 30)));
+      } catch (e) {
+        console.error('Erreur sauvegarde', e);
+      }
     }
 
     function getFavoriteDrinkName() {
@@ -957,7 +1054,7 @@
       dom.modalSave.classList.add('hidden');
     }
 
-    async function handleFormSubmit() {
+    function handleFormSubmit() {
       const pseudo = dom.playerNickname.value.trim();
 
       if (pseudo.length === 0) {
@@ -976,34 +1073,20 @@
         name: pseudo.slice(0, 20),
         bac: parseFloat(bloodAlcohol.toFixed(2)),
         glasses: glassesDrunk,
-        favDrink: getFavoriteDrinkName()
+        favDrink: getFavoriteDrinkName(),
+        date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
       };
 
-      dom.btnConfirmSave.disabled = true;
-      dom.btnConfirmSave.innerText = "Enregistrement...";
-
-      try {
-        await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(scoreEntry)
-        });
-        closeSaveModal();
-        showToast(`Taux de ${scoreEntry.bac.toFixed(2)} g/L gravé au Panthéon ! 🏆`);
-        openLeaderboardModal();
-      } catch (err) {
-        dom.errorMessage.innerText = 'Erreur lors de l\'enregistrement, veuillez réessayer.';
-        dom.errorMessage.classList.remove('hidden');
-      } finally {
-        dom.btnConfirmSave.disabled = false;
-        dom.btnConfirmSave.innerText = "Valider mon Taux ✍️";
-      }
+      saveScoreEntry(scoreEntry);
+      closeSaveModal();
+      showToast(`Taux de ${scoreEntry.bac.toFixed(2)} g/L gravé au Panthéon ! 🏆`);
+      openLeaderboardModal();
     }
 
-    async function openLeaderboardModal() {
+    function openLeaderboardModal() {
       audio.playClick();
+      renderLeaderboard();
       dom.modalLeaderboard.classList.remove('hidden');
-      await renderLeaderboard();
     }
 
     function closeLeaderboardModal() {
@@ -1011,65 +1094,50 @@
       dom.modalLeaderboard.classList.add('hidden');
     }
 
-    async function renderLeaderboard() {
-      dom.leaderboardList.innerHTML = `
-        <div class="text-center py-8 text-stone-400 italic text-sm">
-          Chargement du Top 10...
-        </div>
-      `;
+    function renderLeaderboard() {
+      const scores = getScores().slice(0, 10); // Restreint strictement au Top 10
+      dom.leaderboardList.innerHTML = '';
 
-      try {
-        const res = await fetch(API_URL);
-        const scores = await res.json();
-        dom.leaderboardList.innerHTML = '';
-
-        if (!scores || scores.length === 0) {
-          dom.leaderboardList.innerHTML = `
-            <div class="text-center py-8 text-stone-500 italic text-sm">
-              Aucun record dans le Top 10 pour l'instant.<br>Buvez et enregistrez votre premier taux d'alcool !
-            </div>
-          `;
-          return;
-        }
-
-        scores.forEach((item, index) => {
-          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-          const row = document.createElement('div');
-          row.className = `flex items-center justify-between p-2.5 sm:p-3 rounded-xl border ${
-            index < 3 
-              ? 'bg-rose-950/40 border-rose-500/40' 
-              : 'bg-stone-950/50 border-stone-800'
-          }`;
-          row.innerHTML = `
-            <div class="flex items-center gap-2.5 min-w-0">
-              <span class="font-black text-base w-6 text-center ${index < 3 ? 'text-rose-400' : 'text-stone-500'}">${medal}</span>
-              <div class="truncate">
-                <div class="font-bold text-white text-sm truncate max-w-[150px] sm:max-w-[210px]" title="${escapeHTML(item.name)}">
-                  ${escapeHTML(item.name)}
-                </div>
-                <div class="text-[10px] text-stone-400 flex items-center gap-1.5 truncate">
-                  <span>${item.glasses} verres</span>
-                  <span>•</span>
-                  <span class="truncate">${escapeHTML(item.favDrink || 'Bière')}</span>
-                  <span>•</span>
-                  <span>${item.date || ''}</span>
-                </div>
-              </div>
-            </div>
-            <div class="text-right pl-2 shrink-0">
-              <div class="font-mono font-black text-rose-400 text-sm sm:text-base">${Number(item.bac).toFixed(2)} g/L</div>
-              <div class="text-[9px] uppercase tracking-wider text-amber-400/80 font-semibold">Taux Atteint</div>
-            </div>
-          `;
-          dom.leaderboardList.appendChild(row);
-        });
-      } catch (err) {
+      if (scores.length === 0) {
         dom.leaderboardList.innerHTML = `
-          <div class="text-center py-8 text-rose-400 italic text-sm">
-            Erreur de connexion au classement.
+          <div class="text-center py-8 text-stone-500 italic text-sm">
+            Aucun record dans le Top 10 pour l'instant.<br>Buvez et enregistrez votre premier taux d'alcool !
           </div>
         `;
+        return;
       }
+
+      scores.forEach((item, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between p-2.5 sm:p-3 rounded-xl border ${
+          index < 3 
+            ? 'bg-rose-950/40 border-rose-500/40' 
+            : 'bg-stone-950/50 border-stone-800'
+        }`;
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="font-black text-base w-6 text-center ${index < 3 ? 'text-rose-400' : 'text-stone-500'}">${medal}</span>
+            <div class="truncate">
+              <div class="font-bold text-white text-sm truncate max-w-[150px] sm:max-w-[210px]" title="${escapeHTML(item.name)}">
+                ${escapeHTML(item.name)}
+              </div>
+              <div class="text-[10px] text-stone-400 flex items-center gap-1.5 truncate">
+                <span>${item.glasses} verres</span>
+                <span>•</span>
+                <span class="truncate">${escapeHTML(item.favDrink || 'Bière')}</span>
+                <span>•</span>
+                <span>${item.date || ''}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right pl-2 shrink-0">
+            <div class="font-mono font-black text-rose-400 text-sm sm:text-base">${Number(item.bac).toFixed(2)} g/L</div>
+            <div class="text-[9px] uppercase tracking-wider text-amber-400/80 font-semibold">Taux Atteint</div>
+          </div>
+        `;
+        dom.leaderboardList.appendChild(row);
+      });
     }
 
     function resetGame() {
@@ -1111,13 +1179,18 @@
       }[tag] || tag));
     }
 
+    /* ==========================================================================
+       10. GESTION TACTILE MOBILE & DESKTOP ROBUSTE
+       ========================================================================== */
     function setupEventListeners() {
       const btn = dom.btnDrink;
 
+      // Souris desktop
       btn.addEventListener('mousedown', startDrinking);
       window.addEventListener('mouseup', stopDrinking);
       btn.addEventListener('mouseleave', stopDrinking);
 
+      // Support tactile mobile fluide avec blocage de sélection
       btn.addEventListener('touchstart', (e) => {
         startDrinking(e);
       }, { passive: false });
@@ -1130,6 +1203,7 @@
         stopDrinking(e);
       }, { passive: false });
 
+      // Bouton s'arrêter & enregistrer
       dom.btnStopSave.addEventListener('click', () => {
         if (glassesDrunk === 0 && bloodAlcohol === 0) {
           showToast('Prenez au moins un premier verre pour enregistrer un taux d\'alcool ! 🍻');
@@ -1138,6 +1212,7 @@
         openSaveModal();
       });
 
+      // Contrôle de longueur pseudo en direct (max 20 caractères)
       dom.playerNickname.addEventListener('input', (e) => {
         let val = e.target.value;
         if (val.length > 20) {
@@ -1153,17 +1228,27 @@
       });
 
       dom.btnCancelModal.addEventListener('click', closeSaveModal);
+      // Leaderboard & Top 10
       dom.btnTop10Main.addEventListener('click', openLeaderboardModal);
       dom.btnShowScores.addEventListener('click', openLeaderboardModal);
       dom.btnCloseLeaderboard.addEventListener('click', closeLeaderboardModal);
       dom.btnNewGame.addEventListener('click', resetGame);
 
+      dom.btnClearScores.addEventListener('click', () => {
+        if (getScores().length === 0) return;
+        localStorage.removeItem(STORAGE_KEY);
+        renderLeaderboard();
+        showToast('Tableau des taux réinitialisé.');
+      });
+
+      // Bascule son
       dom.btnSoundToggle.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
         dom.soundStatus.innerText = soundEnabled ? 'ON' : 'OFF';
         if (soundEnabled) audio.init();
       });
 
+      // Fermeture modals par Échap
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           if (!dom.modalSave.classList.contains('hidden')) closeSaveModal();
@@ -1172,6 +1257,7 @@
       });
     }
 
+    /* Démarrage */
     window.addEventListener('load', () => {
       renderDrinkSelector();
       updateGlassVisuals();

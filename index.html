@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Le Bar Challenge - Taux d'Alcool</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at 50% 15%, #201308 0%, #0c0805 65%, #050302 100%);
+      min-height: 100vh;
+      color: #f7eed8;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    .font-serif-title {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* Ambiance Bar & Néons */
+    .neon-text {
+      text-shadow: 0 0 10px rgba(251, 191, 36, 0.7), 0 0 25px rgba(234, 88, 12, 0.5);
+    }
+    .neon-border {
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), inset 0 0 15px rgba(245, 158, 11, 0.15);
+    }
+
+    /* Comptoir en bois verni */
+    .wood-counter {
+      background: linear-gradient(180deg, #422414 0%, #2b170c 50%, #170b04 100%);
+      box-shadow: inset 0 6px 10px rgba(255, 255, 255, 0.08), 0 -8px 25px rgba(0, 0, 0, 0.85);
+      border-top: 3px solid #78350f;
+    }
+
+    /* Effets d'ébriété dynamiques */
+    #game-viewport {
+      transition: filter 0.3s ease, transform 0.4s ease;
+      transform-origin: center center;
+      width: 100%;
+    }
+
+    @keyframes drunkenSway {
+      0% { transform: rotate(0deg) translate(0px, 0px) skewX(0deg); }
+      25% { transform: rotate(var(--sway-deg, 1.5deg)) translate(var(--sway-px, 4px), -2px) skewX(0.7deg); }
+      50% { transform: rotate(calc(-1 * var(--sway-deg, 1.5deg))) translate(calc(-1 * var(--sway-px, 4px)), 3px) skewX(-0.7deg); }
+      75% { transform: rotate(calc(var(--sway-deg, 1.5deg) * 0.7)) translate(2px, calc(var(--sway-px, 4px) * 0.7)); }
+      100% { transform: rotate(0deg) translate(0px, 0px) skewX(0deg); }
+    }
+
+    .is-drunken {
+      animation: drunkenSway var(--sway-speed, 4s) infinite ease-in-out;
+    }
+
+    /* Vague du liquide SVG */
+    @keyframes waveMotion {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .liquid-wave {
+      animation: waveMotion 2s linear infinite;
+    }
+
+    /* Bulles */
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.7); opacity: 0; }
+      25% { opacity: 0.8; }
+      85% { opacity: 0.8; }
+      100% { transform: translateY(-110px) scale(1.2); opacity: 0; }
+    }
+    .bubble {
+      animation: floatUp 1.8s infinite ease-in;
+    }
+
+    /* Bouton Boire Action Pulsation */
+    .btn-drink-pulse {
+      box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7);
+      animation: pulseDrink 2s infinite;
+    }
+    @keyframes pulseDrink {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.6); }
+      70% { transform: scale(1.02); box-shadow: 0 0 0 14px rgba(234, 88, 12, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+    }
+
+    .drinking-active {
+      transform: scale(0.97) !important;
+      box-shadow: 0 0 35px rgba(249, 115, 22, 0.9), inset 0 6px 14px rgba(0, 0, 0, 0.6) !important;
+      background: linear-gradient(135deg, #c2410c, #9a3412) !important;
+    }
+
+    /* Animation Nausée / Refus de boire */
+    @keyframes nauseousShake {
+      0%, 100% { transform: translateX(0) rotate(0); }
+      20% { transform: translateX(-8px) rotate(-3deg); }
+      40% { transform: translateX(8px) rotate(3deg); }
+      60% { transform: translateX(-6px) rotate(-2deg); }
+      80% { transform: translateX(6px) rotate(2deg); }
+    }
+    .shake-nausea {
+      animation: nauseousShake 0.45s ease-in-out infinite;
+    }
+
+    /* Empêcher tout conflit tactile sur le bouton */
+    .touch-target {
+      touch-action: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between min-h-screen">
+
+  <!-- Viewport englobant l'ivresse visuelle -->
+  <div id="game-viewport" class="w-full flex-1 flex flex-col justify-between">
+
+    <!-- En-tête : Taux d'alcool & compteurs -->
+    <header class="w-full px-3 sm:px-6 pt-3 pb-2 max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 border-b border-amber-900/40">
+      <div class="flex items-center gap-2.5">
+        <span class="text-3xl filter drop-shadow">🍻</span>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black font-serif-title tracking-wide text-amber-300 neon-text">Le Dernier Verre</h1>
+          <p class="text-[10px] sm:text-xs text-amber-400/70 tracking-widest uppercase">Épreuve d'Alcoolémie Virtuelle</p>
+        </div>
+      </div>
+
+      <!-- Taux d'Alcool mis en valeur comme métrique centrale -->
+      <div class="flex items-center gap-3 sm:gap-5 bg-stone-900/90 backdrop-blur px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl border border-amber-800/50 shadow-inner">
+        <div class="text-center">
+          <div class="text-[10px] uppercase font-bold text-amber-500/80">Verres bus</div>
+          <div id="glasses-count" class="text-xl sm:text-2xl font-black text-white">0</div>
+        </div>
+        <div class="h-8 w-px bg-amber-900/70"></div>
+        <div class="text-center">
+          <div class="text-[10px] uppercase font-bold text-rose-400">Taux d'Alcool (Score)</div>
+          <div id="bac-count" class="text-xl sm:text-3xl font-black text-rose-400 font-mono tracking-tight">0.00 <span class="text-xs font-semibold">g/L</span></div>
+        </div>
+        <div class="h-8 w-px bg-amber-900/70"></div>
+        <div class="text-center">
+          <div class="text-[10px] uppercase font-bold text-amber-500/80">Vitesse déglutition</div>
+          <div id="speed-indicator" class="text-xs sm:text-sm font-bold text-amber-300">100% (Rapide)</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Zone Centrale : Sélection classée par g/L + Verre SVG + Bouton tactile -->
+    <main class="w-full max-w-4xl mx-auto px-3 sm:px-4 py-3 flex-1 flex flex-col items-center justify-center">
+
+      <!-- Sélecteur des 6 boissons rangées en ordre croissant de g/L -->
+      <div class="w-full mb-3 sm:mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-400/90">
+            Carte des boissons (classées par g/L croissant)
+          </span>
+          <span class="text-[10px] text-amber-200/50 italic">De la plus douce à la plus forte</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2" id="drink-selector">
+          <!-- Rempli par JavaScript -->
+        </div>
+      </div>
+
+      <!-- Verre interactif SVG -->
+      <div class="relative w-48 h-64 sm:w-60 sm:h-72 flex items-center justify-center">
+        <!-- Halo lumineux d'ambiance -->
+        <div id="drink-glow" class="absolute inset-0 rounded-full blur-3xl opacity-35 transition-all duration-700 bg-amber-500"></div>
+
+        <svg class="w-full h-full drop-shadow-2xl overflow-visible" viewBox="0 0 200 250">
+          <defs>
+            <clipPath id="glass-inner-clip">
+              <polygon points="45,40 155,40 142,205 58,205" />
+            </clipPath>
+
+            <linearGradient id="liquidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" id="grad-stop-1" stop-color="#f59e0b" />
+              <stop offset="50%" id="grad-stop-2" stop-color="#fbbf24" />
+              <stop offset="100%" id="grad-stop-3" stop-color="#d97706" />
+            </linearGradient>
+
+            <linearGradient id="glassReflect" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
+              <stop offset="35%" stop-color="rgba(255,255,255,0.06)" />
+              <stop offset="85%" stop-color="rgba(255,255,255,0.0)" />
+              <stop offset="100%" stop-color="rgba(255,255,255,0.3)" />
+            </linearGradient>
+          </defs>
+
+          <!-- Pied du verre -->
+          <ellipse cx="100" cy="235" rx="42" ry="7" fill="#1c1109" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+          <path d="M 96,205 L 96,233 L 104,233 L 104,205 Z" fill="rgba(255,255,255,0.22)" stroke="rgba(255,255,255,0.1)"/>
+
+          <!-- Fond du calice -->
+          <polygon points="44,38 156,38 143,207 57,207" fill="rgba(255, 255, 255, 0.04)" />
+
+          <!-- Liquide -->
+          <g clip-path="url(#glass-inner-clip)">
+            <rect id="liquid-body" x="40" y="40" width="120" height="165" fill="url(#liquidGrad)" />
+
+            <!-- Glaçons -->
+            <g id="ice-cubes" class="transition-opacity duration-300" opacity="0">
+              <rect x="70" y="140" width="26" height="26" rx="4" fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" transform="rotate(15 83 153)"/>
+              <rect x="105" y="150" width="24" height="24" rx="4" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" transform="rotate(-20 117 162)"/>
+            </g>
+
+            <!-- Bulles pétillantes -->
+            <g id="bubbles-group">
+              <circle class="bubble" cx="80" cy="190" r="3" fill="rgba(255,255,255,0.6)" style="animation-delay: 0.1s;"/>
+              <circle class="bubble" cx="120" cy="180" r="2.5" fill="rgba(255,255,255,0.5)" style="animation-delay: 0.7s;"/>
+              <circle class="bubble" cx="95" cy="195" r="4" fill="rgba(255,255,255,0.7)" style="animation-delay: 1.2s;"/>
+              <circle class="bubble" cx="70" cy="175" r="2" fill="rgba(255,255,255,0.6)" style="animation-delay: 0.4s;"/>
+              <circle class="bubble" cx="130" cy="195" r="3.5" fill="rgba(255,255,255,0.55)" style="animation-delay: 1.5s;"/>
+            </g>
+
+            <!-- Mousse pour bière -->
+            <g id="beer-foam" class="transition-all duration-200" opacity="1" transform="translate(0, 0)">
+              <ellipse id="foam-ellipse" cx="100" cy="45" rx="56" ry="12" fill="#fffef0" />
+              <circle cx="65" cy="42" r="10" fill="#fffef0" />
+              <circle cx="85" cy="38" r="12" fill="#fffef0" />
+              <circle cx="115" cy="38" r="12" fill="#fffef0" />
+              <circle cx="135" cy="42" r="10" fill="#fffef0" />
+            </g>
+
+            <path id="liquid-wave-path" class="liquid-wave" d="M 0,0 Q 20,6 40,0 T 80,0 T 120,0 T 160,0 T 200,0 V 20 H 0 Z" fill="rgba(255,255,255,0.3)" transform="translate(0, 40)"/>
+          </g>
+
+          <!-- Paroi extérieure en verre avec réflexion -->
+          <polygon points="44,38 156,38 143,207 57,207" fill="url(#glassReflect)" stroke="rgba(255, 255, 255, 0.45)" stroke-width="3" />
+          <ellipse cx="100" cy="38" rx="56" ry="7" fill="none" stroke="rgba(255, 255, 255, 0.65)" stroke-width="2.5" />
+        </svg>
+
+        <!-- Pourcentage liquide restant -->
+        <div id="drink-percent-text" class="absolute bottom-5 font-mono text-sm tracking-widest font-black text-amber-200/90 bg-stone-950/80 px-3 py-1 rounded-full border border-amber-500/40 backdrop-blur">
+          100%
+        </div>
+      </div>
+
+      <!-- Description dynamique du verre en main -->
+      <div class="mt-2 text-center">
+        <h3 id="current-drink-name" class="text-lg sm:text-xl font-bold text-amber-300">Bière Blonde</h3>
+        <p id="current-drink-desc" class="text-xs text-amber-200/70 max-w-sm mx-auto">
+          Fraîche avec mousse onctueuse (+0.20 g/L).
+        </p>
+      </div>
+
+      <!-- Alerte Nausée / Refus de boire -->
+      <div id="nausea-alert" class="w-full max-w-sm mt-3 p-3 rounded-2xl bg-rose-950/90 border-2 border-rose-500 text-rose-200 text-center hidden">
+        <div class="flex items-center justify-center gap-2 font-black text-sm text-rose-300">
+          <span class="text-2xl shake-nausea">🤢</span>
+          <span>ESTOMAC EN SURCHAUFFE ! REFUS DE BOIRE !</span>
+        </div>
+        <p class="text-[11px] text-rose-300/80 mt-1">Deux culs-secs enchaînés ! Pause digestion obligatoire...</p>
+        <div class="w-full bg-stone-900 rounded-full h-2.5 mt-2 overflow-hidden border border-rose-500/40">
+          <div id="cooldown-bar" class="bg-gradient-to-r from-rose-500 to-amber-500 h-2.5 rounded-full transition-all duration-100" style="width: 100%"></div>
+        </div>
+        <div id="cooldown-timer-text" class="text-xs font-mono font-bold mt-1 text-rose-200">Pause : 7.0s</div>
+      </div>
+
+      <!-- Zone de contrôle interactive : Boire & Sauvegarder -->
+      <div class="w-full max-w-sm mt-4 flex flex-col items-center gap-3">
+        <!-- Bouton MAINTENIR POUR BOIRE (Optimisé tactile) -->
+        <button id="btn-drink" 
+                class="touch-target btn-drink-pulse w-full py-4 sm:py-5 px-6 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-500 text-white font-black text-lg sm:text-2xl uppercase tracking-wider shadow-2xl border-2 border-amber-300/40 cursor-pointer transition duration-150 transform">
+          <span class="flex items-center justify-center gap-2 sm:gap-3 pointer-events-none">
+            <span id="drink-icon-btn" class="text-2xl">🍺</span>
+            <span id="drink-text-btn">Maintenir pour Boire</span>
+          </span>
+        </button>
+
+        <!-- Rangée boutons d'action : Top 10 + Arrêter & Enregistrer -->
+        <div class="w-full flex gap-2">
+          <button id="btn-top10-main" 
+                  class="py-3 px-3 sm:px-4 rounded-xl bg-amber-950/90 hover:bg-amber-900 border border-amber-500/60 text-amber-300 font-bold text-xs sm:text-sm transition duration-200 flex items-center justify-center gap-1.5 shadow-lg cursor-pointer shrink-0">
+            <span>🏆</span>
+            <span>Top 10</span>
+          </button>
+          <button id="btn-stop-save" 
+                  class="flex-1 py-3 px-3 sm:px-4 rounded-xl bg-stone-900/90 hover:bg-stone-800 border border-rose-500/50 hover:border-rose-400 text-rose-300 font-bold text-xs sm:text-sm transition duration-200 flex items-center justify-center gap-1.5 shadow-lg cursor-pointer">
+            <span>🛑</span>
+            <span>Enregistrer mon taux (g/L)</span>
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Comptoir du bas -->
+    <footer class="wood-counter w-full pt-3 pb-4 px-4">
+      <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-amber-300/80">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Comptoir ouvert • Cul-sec consécutif = 7s de refus</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <button id="btn-show-scores" class="hover:text-amber-100 underline font-semibold cursor-pointer">
+            🏆 Top 10 des Taux (g/L)
+          </button>
+          <span>•</span>
+          <button id="btn-sound-toggle" class="hover:text-amber-100 cursor-pointer">
+            🔊 Son : <span id="sound-status">ON</span>
+          </button>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- MODAL : Enregistrement du Taux d'Alcool (Pseudo max 20 car.) -->
+  <div id="modal-save" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="w-full max-w-md bg-stone-900 border-2 border-rose-500/70 rounded-3xl p-5 sm:p-7 shadow-2xl relative">
+      <div class="text-center mb-4">
+        <div class="text-4xl mb-1">🏁</div>
+        <h2 class="text-2xl font-black font-serif-title text-rose-400">Fin de Soirée !</h2>
+        <p class="text-xs sm:text-sm text-stone-300 mt-1">
+          Vous posez votre dernier verre et soufflez dans le ballon.
+        </p>
+      </div>
+
+      <!-- Bilan du test d'alcoolémie -->
+      <div class="bg-stone-950/80 rounded-2xl p-4 mb-4 border border-rose-900/50 flex justify-around text-center">
+        <div>
+          <div class="text-[10px] uppercase text-stone-400 font-bold">Verres bus</div>
+          <div id="modal-summary-glasses" class="text-2xl font-black text-white">0</div>
+        </div>
+        <div class="w-px bg-stone-800"></div>
+        <div>
+          <div class="text-[10px] uppercase text-rose-400 font-bold">Taux Final d'Alcool</div>
+          <div id="modal-summary-bac" class="text-2xl font-black text-rose-400 font-mono">0.00 g/L</div>
+        </div>
+        <div class="w-px bg-stone-800"></div>
+        <div>
+          <div class="text-[10px] uppercase text-stone-400 font-bold">Boisson fétiche</div>
+          <div id="modal-summary-fav" class="text-xs font-bold text-amber-300 mt-1.5 max-w-[90px] truncate">-</div>
+        </div>
+      </div>
+
+      <!-- Formulaire avec Pseudo limité à 20 caractères -->
+      <form id="form-save-score" onsubmit="return false;" class="space-y-4">
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label for="player-nickname" class="text-xs sm:text-sm font-semibold text-amber-200">
+              Pseudo du Buveur :
+            </label>
+            <span id="char-counter" class="text-xs font-mono text-amber-400">0 / 20</span>
+          </div>
+          <input 
+            type="text" 
+            id="player-nickname" 
+            maxlength="20" 
+            placeholder="Ex: Le Roi du Zinc..." 
+            class="w-full px-4 py-3 rounded-xl bg-stone-950 border-2 border-amber-700/60 focus:border-rose-400 text-white placeholder-stone-600 focus:outline-none font-bold text-base sm:text-lg"
+            autocomplete="off"
+            required
+          >
+          <p id="error-message" class="text-xs text-rose-400 mt-1.5 hidden"></p>
+        </div>
+
+        <div class="flex gap-3 pt-1">
+          <button type="button" id="btn-cancel-modal" class="flex-1 py-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-sm transition">
+            Continuer à boire
+          </button>
+          <button type="submit" id="btn-confirm-save" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-black text-sm transition shadow-lg">
+            Valider mon Taux ✍️
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL : Panthéon des Taux d'Alcoolémie (g/L) -->
+  <div id="modal-leaderboard" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="w-full max-w-lg bg-stone-900 border-2 border-rose-500/70 rounded-3xl p-5 sm:p-7 shadow-2xl relative max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-amber-900/50">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🏆</span>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black font-serif-title text-rose-400">Top 10 - Taux d'Alcool</h2>
+            <p class="text-[11px] text-stone-400">Les 10 plus hauts taux en g/L enregistrés au comptoir</p>
+          </div>
+        </div>
+        <button id="btn-close-leaderboard" class="text-stone-400 hover:text-white text-2xl font-bold cursor-pointer p-1">✕</button>
+      </div>
+
+      <!-- Liste des 10 meilleurs scores classés par g/L décroissant -->
+      <div id="leaderboard-list" class="flex-1 overflow-y-auto py-3 space-y-2 my-2 pr-1"></div>
+
+      <div class="pt-3 border-t border-amber-900/50 flex justify-between items-center gap-3">
+        <button id="btn-clear-scores" class="text-xs text-stone-400 hover:text-rose-400 underline cursor-pointer">
+          Vider l'historique
+        </button>
+        <button id="btn-new-game" class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm shadow transition cursor-pointer">
+          Remettre la table à zéro 🍻
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-stone-950 font-black px-5 py-2.5 rounded-2xl shadow-2xl border-2 border-amber-300 z-50 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-4 text-sm text-center">
+    Message
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. BOISSONS CLASSÉES STRICTEMENT PAR ORDRE CROISSANT DE g/L
+       ========================================================================== */
+    const DRINKS = [
+      {
+        id: 'beer',
+        name: 'Bière Blonde',
+        icon: '🍺',
+        alcohol: 0.20, // 1ère: 0.20 g/L
+        baseDuration: 1300, // Temps de base à 0 g/L (ms)
+        desc: 'Fraîche et légère avec mousse généreuse (+0.20 g/L)',
+        colors: { stop1: '#f59e0b', stop2: '#fcd34d', stop3: '#d97706', glow: 'rgba(245, 158, 11, 0.45)' },
+        hasFoam: true,
+        hasIce: false
+      },
+      {
+        id: 'rose_wine',
+        name: 'Vin Rosé',
+        icon: '🌸',
+        alcohol: 0.25, // 2ème: 0.25 g/L
+        baseDuration: 1400,
+        desc: 'Frais, fruité et printanier (+0.25 g/L)',
+        colors: { stop1: '#fb7185', stop2: '#fecdd3', stop3: '#f43f5e', glow: 'rgba(251, 113, 133, 0.45)' },
+        hasFoam: false,
+        hasIce: false
+      },
+      {
+        id: 'white_wine',
+        name: 'Vin Blanc',
+        icon: '🥂',
+        alcohol: 0.26, // 3ème: 0.26 g/L
+        baseDuration: 1450,
+        desc: 'Sec, vif et éclatant d\'or pâle (+0.26 g/L)',
+        colors: { stop1: '#fef08a', stop2: '#fef9c3', stop3: '#eab308', glow: 'rgba(250, 204, 21, 0.4)' },
+        hasFoam: false,
+        hasIce: false
+      },
+      {
+        id: 'red_wine',
+        name: 'Vin Rouge',
+        icon: '🍷',
+        alcohol: 0.28, // 4ème: 0.28 g/L
+        baseDuration: 1550,
+        desc: 'Robe rubis foncé et tanins ronds (+0.28 g/L)',
+        colors: { stop1: '#881337', stop2: '#9f1239', stop3: '#4c0519', glow: 'rgba(159, 18, 57, 0.5)' },
+        hasFoam: false,
+        hasIce: false
+      },
+      {
+        id: 'whisky_cola',
+        name: 'Whisky Coca',
+        icon: '🥃',
+        alcohol: 0.35, // 5ème: 0.35 g/L
+        baseDuration: 1650,
+        desc: 'Ambré puissant et servi bien frais (+0.35 g/L)',
+        colors: { stop1: '#451a03', stop2: '#78350f', stop3: '#291004', glow: 'rgba(120, 53, 15, 0.5)' },
+        hasFoam: false,
+        hasIce: true
+      },
+      {
+        id: 'vodka_redbull',
+        name: 'Vodka Redbull',
+        icon: '⚡',
+        alcohol: 0.42, // 6ème: 0.42 g/L
+        baseDuration: 1750,
+        desc: 'Pétillant, caféiné et coup de fouet redoutable (+0.42 g/L)',
+        colors: { stop1: '#0284c7', stop2: '#38bdf8', stop3: '#0369a1', glow: 'rgba(2, 132, 199, 0.5)' },
+        hasFoam: false,
+        hasIce: true
+      }
+    ];
+
+    /* ==========================================================================
+       2. ÉTAT DU JEU
+       ========================================================================== */
+    let currentDrinkIndex = 0;
+    let glassesDrunk = 0;
+    let bloodAlcohol = 0.00; // En g/L (Le Score réel du jeu)
+    let drinkCounts = { beer: 0, rose_wine: 0, white_wine: 0, red_wine: 0, whisky_cola: 0, vodka_redbull: 0 };
+
+    let isDrinking = false;
+    let drinkStartTime = 0;
+    let drinkProgress = 0.0;
+    let animationFrameId = null;
+    let soundEnabled = true;
+
+    // Détection de cul-sec indépendante de la vitesse de déglutition :
+    // Un verre bu sans relâcher la touche/tactile = cul-sec avéré.
+    // Si on termine deux verres avec un repos inter-verres trop court, refus garanti.
+    let releasesCountDuringGlass = 0;
+    let consecutiveChugStreak = 0;
+    let lastDrinkFinishTimestamp = 0;
+    let isStomachLocked = false;
+    let stomachCooldownTimer = null;
+    const NAUSEA_LOCKOUT_MS = 7000; // 7 secondes complètes de refus de boire
+    class BarAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.glugInterval = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // La fréquence des glou-glous ralentit lorsque le taux d'alcool augmente
+      startGlug(intervalMs) {
+        if (!soundEnabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        this.stopGlug();
+        this.playSingleGlug();
+        this.glugInterval = setInterval(() => {
+          this.playSingleGlug();
+        }, Math.max(140, intervalMs));
+      }
+
+      stopGlug() {
+        if (this.glugInterval) {
+          clearInterval(this.glugInterval);
+          this.glugInterval = null;
+        }
+      }
+
+      playSingleGlug() {
+        if (!this.ctx || !soundEnabled) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const now = this.ctx.currentTime;
+
+          // Son plus grave et lourd quand on a beaucoup bu
+          const pitchFactor = Math.max(0.65, 1.0 - (bloodAlcohol * 0.08));
+          const baseFreq = (210 + Math.random() * 60) * pitchFactor;
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(baseFreq, now);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.11);
+
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.14);
+        } catch (e) {}
+      }
+
+      // Tintement de verre de fin
+      playCheer() {
+        if (!this.ctx || !soundEnabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          [1760, 2637].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + idx * 0.05);
+            osc.stop(now + 0.65);
+          });
+        } catch (e) {}
+      }
+
+      // Son de nausée / rot étouffé lors du blocage d'estomac
+      playNauseaSound() {
+        if (!this.ctx || !soundEnabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(120, now);
+          osc.frequency.linearRampToValueAtTime(70, now + 0.25);
+          osc.frequency.linearRampToValueAtTime(95, now + 0.5);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.6);
+        } catch (e) {}
+      }
+
+      playClick() {
+        if (!this.ctx || !soundEnabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(180, now + 0.04);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } catch (e) {}
+      }
+    }
+
+    const audio = new BarAudioEngine();
+
+    /* ==========================================================================
+       4. ÉLÉMENTS DOM
+       ========================================================================== */
+    const dom = {
+      viewport: document.getElementById('game-viewport'),
+      glassesCount: document.getElementById('glasses-count'),
+      bacCount: document.getElementById('bac-count'),
+      speedIndicator: document.getElementById('speed-indicator'),
+      drinkSelector: document.getElementById('drink-selector'),
+      liquidBody: document.getElementById('liquid-body'),
+      liquidWavePath: document.getElementById('liquid-wave-path'),
+      beerFoam: document.getElementById('beer-foam'),
+      iceCubes: document.getElementById('ice-cubes'),
+      drinkPercentText: document.getElementById('drink-percent-text'),
+      drinkGlow: document.getElementById('drink-glow'),
+      currentDrinkName: document.getElementById('current-drink-name'),
+      currentDrinkDesc: document.getElementById('current-drink-desc'),
+      gradStop1: document.getElementById('grad-stop-1'),
+      gradStop2: document.getElementById('grad-stop-2'),
+      gradStop3: document.getElementById('grad-stop-3'),
+      btnDrink: document.getElementById('btn-drink'),
+      drinkTextBtn: document.getElementById('drink-text-btn'),
+      drinkIconBtn: document.getElementById('drink-icon-btn'),
+      btnStopSave: document.getElementById('btn-stop-save'),
+      btnTop10Main: document.getElementById('btn-top10-main'),
+      nauseaAlert: document.getElementById('nausea-alert'),
+      cooldownBar: document.getElementById('cooldown-bar'),
+      cooldownTimerText: document.getElementById('cooldown-timer-text'),
+      modalSave: document.getElementById('modal-save'),
+      formSaveScore: document.getElementById('form-save-score'),
+      playerNickname: document.getElementById('player-nickname'),
+      charCounter: document.getElementById('char-counter'),
+      btnCancelModal: document.getElementById('btn-cancel-modal'),
+      modalSummaryGlasses: document.getElementById('modal-summary-glasses'),
+      modalSummaryBac: document.getElementById('modal-summary-bac'),
+      modalSummaryFav: document.getElementById('modal-summary-fav'),
+      modalLeaderboard: document.getElementById('modal-leaderboard'),
+      leaderboardList: document.getElementById('leaderboard-list'),
+      btnShowScores: document.getElementById('btn-show-scores'),
+      btnCloseLeaderboard: document.getElementById('btn-close-leaderboard'),
+      btnNewGame: document.getElementById('btn-new-game'),
+      btnClearScores: document.getElementById('btn-clear-scores'),
+      btnSoundToggle: document.getElementById('btn-sound-toggle'),
+      soundStatus: document.getElementById('sound-status'),
+      toast: document.getElementById('toast'),
+      errorMessage: document.getElementById('error-message')
+    };
+
+    /* ==========================================================================
+       5. LOGIQUE DES BOISSONS & RENDU
+       ========================================================================== */
+    function renderDrinkSelector() {
+      dom.drinkSelector.innerHTML = '';
+      DRINKS.forEach((drink, idx) => {
+        const btn = document.createElement('button');
+        const isSelected = idx === currentDrinkIndex;
+        btn.type = 'button';
+        btn.className = `p-2 sm:p-2.5 rounded-xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer touch-manipulation ${
+          isSelected 
+            ? 'bg-amber-950/80 border-rose-400 ring-2 ring-rose-400/50 shadow-lg' 
+            : 'bg-stone-900/70 border-amber-900/40 hover:bg-stone-800 hover:border-amber-700/60'
+        }`;
+        btn.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xl sm:text-2xl">${drink.icon}</span>
+            <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-500/40">
+              +${drink.alcohol.toFixed(2)} g/L
+            </span>
+          </div>
+          <div class="mt-1">
+            <div class="text-xs font-bold text-white truncate">${drink.name}</div>
+            <div class="text-[10px] text-amber-200/50">Rang #${idx + 1}</div>
+          </div>
+        `;
+
+        btn.addEventListener('click', () => {
+          if (isDrinking || isStomachLocked) return;
+          audio.playClick();
+          selectDrink(idx);
+        });
+
+        dom.drinkSelector.appendChild(btn);
+      });
+    }
+
+    function selectDrink(index) {
+      currentDrinkIndex = index;
+      renderDrinkSelector();
+      updateGlassVisuals();
+      resetGlassFill();
+    }
+
+    function updateGlassVisuals() {
+      const drink = DRINKS[currentDrinkIndex];
+      dom.gradStop1.setAttribute('stop-color', drink.colors.stop1);
+      dom.gradStop2.setAttribute('stop-color', drink.colors.stop2);
+      dom.gradStop3.setAttribute('stop-color', drink.colors.stop3);
+
+      dom.drinkGlow.style.backgroundColor = drink.colors.glow;
+      dom.currentDrinkName.innerText = drink.name;
+      dom.currentDrinkDesc.innerText = drink.desc;
+      dom.drinkIconBtn.innerText = drink.icon;
+
+      dom.beerFoam.style.opacity = drink.hasFoam ? '1' : '0';
+      dom.iceCubes.setAttribute('opacity', drink.hasIce ? '1' : '0');
+    }
+
+    function resetGlassFill() {
+      drinkProgress = 0.0;
+      releasesCountDuringGlass = 0; // Réinitialise les gorgées pour ce nouveau verre
+      updateGlassHeight(0.0);
+      dom.drinkPercentText.innerText = '100%';
+    }
+
+    function updateGlassHeight(progress) {
+      const topY = 40;
+      const bottomY = 205;
+      const totalH = bottomY - topY;
+
+      const currentY = topY + (totalH * progress);
+      const remainingHeight = Math.max(0, bottomY - currentY);
+
+      dom.liquidBody.setAttribute('y', currentY);
+      dom.liquidBody.setAttribute('height', remainingHeight);
+
+      dom.liquidWavePath.setAttribute('transform', `translate(0, ${currentY - 5})`);
+      dom.beerFoam.setAttribute('transform', `translate(0, ${currentY - 40})`);
+
+      if (progress > 0.85) {
+        dom.beerFoam.style.opacity = '0';
+      } else if (DRINKS[currentDrinkIndex].hasFoam) {
+        dom.beerFoam.style.opacity = '1';
+      }
+    }
+
+    /* ==========================================================================
+       6. VITESSE ADAPTATIVE SELON LE TAUX D'ALCOOL (Ralentissement progressif)
+       ========================================================================== */
+    function getCurrentDrinkDuration() {
+      const drink = DRINKS[currentDrinkIndex];
+      // Ralentissement : chaque 1.0 g/L augmente la durée de consommation de 65%
+      // À 0 g/L -> x1.0 de durée (rapide)
+      // À 2 g/L -> x2.3 de durée
+      // À 4 g/L -> x3.6 de durée (très lent)
+      const slowdownMultiplier = 1.0 + (bloodAlcohol * 0.65);
+      return drink.baseDuration * slowdownMultiplier;
+    }
+
+    function updateSpeedIndicator() {
+      const duration = getCurrentDrinkDuration();
+      const base = DRINKS[currentDrinkIndex].baseDuration;
+      const ratio = Math.round((base / duration) * 100);
+
+      let label = 'Rapide';
+      if (ratio < 40) label = 'Pâteux & Très Lent';
+      else if (ratio < 70) label = 'Ralenti';
+
+      dom.speedIndicator.innerText = `${ratio}% (${label})`;
+    }
+
+    /* ==========================================================================
+       7. MÉCANIQUE DU BOIRE & DÉTECTION DU REFUS (CUL-SEC INDÉPENDANT DE LA VITESSE)
+       ========================================================================== */
+    function startDrinking(e) {
+      if (e && e.cancelable) {
+        e.preventDefault();
+      }
+
+      if (isStomachLocked) {
+        showToast('Estomac en surchauffe ! Pause de digestion obligatoire... 🤢');
+        return;
+      }
+
+      if (isDrinking) return;
+
+      audio.init();
+      isDrinking = true;
+      drinkStartTime = performance.now();
+      dom.btnDrink.classList.add('drinking-active');
+      dom.drinkTextBtn.innerText = 'Déglutition en cours...';
+
+      // Fréquence du son de glou-glou ajustée à la vitesse actuelle
+      const currentDuration = getCurrentDrinkDuration();
+      const glugStep = Math.min(320, 150 * (currentDuration / DRINKS[currentDrinkIndex].baseDuration));
+      audio.startGlug(glugStep);
+
+      const initialProgress = drinkProgress;
+
+      function loop(now) {
+        if (!isDrinking) return;
+
+        const elapsed = now - drinkStartTime;
+        const addedProgress = elapsed / currentDuration;
+        drinkProgress = Math.min(1.0, initialProgress + addedProgress);
+
+        updateGlassHeight(drinkProgress);
+        const percentLeft = Math.round((1 - drinkProgress) * 100);
+        dom.drinkPercentText.innerText = `${percentLeft}%`;
+
+        // Verre terminé
+        if (drinkProgress >= 1.0) {
+          finishDrink();
+          return;
+        }
+
+        animationFrameId = requestAnimationFrame(loop);
+      }
+
+      animationFrameId = requestAnimationFrame(loop);
+    }
+
+    function stopDrinking(e) {
+      if (e && e.cancelable) e.preventDefault();
+      if (!isDrinking) return;
+
+      isDrinking = false;
+      dom.btnDrink.classList.remove('drinking-active');
+      dom.drinkTextBtn.innerText = 'Maintenir pour Boire';
+      audio.stopGlug();
+
+      // Si le verre n'était pas fini, le joueur a relâché -> ce n'est donc PAS un cul-sec strict en 1 seule traite
+      if (drinkProgress < 1.0) {
+        releasesCountDuringGlass++;
+      }
+
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    function finishDrink() {
+      stopDrinking();
+
+      const now = performance.now();
+      const timeSinceLastDrink = now - lastDrinkFinishTimestamp;
+      lastDrinkFinishTimestamp = now;
+
+      // Définition d'un cul-sec :
+      // 1. Bu d'une seule traite sans jamais relâcher (releasesCountDuringGlass === 0),
+      // OU 2. Enchaîné avec moins de 4 secondes de pause par rapport au verre précédent.
+      // Cela fonctionne même si la déglutition a duré longtemps !
+      const isCulSec = (releasesCountDuringGlass === 0) || (timeSinceLastDrink < 4000);
+
+      if (isCulSec) {
+        consecutiveChugStreak++;
+      } else {
+        consecutiveChugStreak = 1;
+      }
+
+      const drink = DRINKS[currentDrinkIndex];
+      glassesDrunk++;
+      drinkCounts[drink.id]++;
+      bloodAlcohol = parseFloat((bloodAlcohol + drink.alcohol).toFixed(2));
+
+      // Mise à jour de l'affichage principal
+      dom.glassesCount.innerText = glassesDrunk;
+      dom.bacCount.innerHTML = `${bloodAlcohol.toFixed(2)} <span class="text-xs font-semibold">g/L</span>`;
+      updateSpeedIndicator();
+
+      audio.playCheer();
+      applyDrunkenEffects();
+
+      // Refus de boire déclenché dès 2 culs-secs consécutifs
+      if (consecutiveChugStreak >= 2) {
+        showToast(`Trop de cul-secs d'affilée ! Refus de boire pendant 7 secondes ! 🤢`);
+        triggerNauseaLockout();
+      } else {
+        showToast(`+1 ${drink.name} bu ! (+${drink.alcohol.toFixed(2)} g/L)`);
+        setTimeout(() => {
+          resetGlassFill();
+        }, 300);
+      }
+    }
+
+    /* Déclenchement de la nausée et du temps d'attente obligatoire porté à 7 secondes */
+    function triggerNauseaLockout() {
+      isStomachLocked = true;
+      consecutiveChugStreak = 0;
+      releasesCountDuringGlass = 0;
+      audio.playNauseaSound();
+
+      dom.btnDrink.disabled = true;
+      dom.btnDrink.classList.remove('btn-drink-pulse');
+      dom.btnDrink.classList.add('opacity-50', 'cursor-not-allowed');
+      dom.drinkTextBtn.innerText = 'Estomac saturé...';
+
+      dom.nauseaAlert.classList.remove('hidden');
+
+      const lockoutTotalMs = NAUSEA_LOCKOUT_MS; // 7000 ms
+      const lockoutStart = performance.now();
+
+      if (stomachCooldownTimer) clearInterval(stomachCooldownTimer);
+
+      stomachCooldownTimer = setInterval(() => {
+        const elapsed = performance.now() - lockoutStart;
+        const remainingMs = Math.max(0, lockoutTotalMs - elapsed);
+        const percent = (remainingMs / lockoutTotalMs) * 100;
+
+        dom.cooldownBar.style.width = `${percent}%`;
+        dom.cooldownTimerText.innerText = `Pause digestion : ${(remainingMs / 1000).toFixed(1)}s`;
+
+        if (remainingMs <= 0) {
+          clearInterval(stomachCooldownTimer);
+          isStomachLocked = false;
+          dom.nauseaAlert.classList.add('hidden');
+
+          dom.btnDrink.disabled = false;
+          dom.btnDrink.classList.add('btn-drink-pulse');
+          dom.btnDrink.classList.remove('opacity-50', 'cursor-not-allowed');
+          dom.drinkTextBtn.innerText = 'Maintenir pour Boire';
+
+          showToast('L\'estomac s\'est calmé. Vous pouvez reprendre un verre ! 🍻');
+          resetGlassFill();
+        }
+      }, 50);
+    }
+
+    /* ==========================================================================
+       8. EFFETS D'ÉBRIÉTÉ VISUELS
+       ========================================================================== */
+    function applyDrunkenEffects() {
+      if (bloodAlcohol === 0) {
+        dom.viewport.style.filter = 'none';
+        dom.viewport.classList.remove('is-drunken');
+        return;
+      }
+
+      const blurAmount = Math.min(4.0, bloodAlcohol * 0.9);
+      const saturateAmount = Math.min(180, 100 + (bloodAlcohol * 20));
+      const swayDeg = Math.min(5.5, 0.8 + (bloodAlcohol * 1.1));
+      const swayPx = Math.min(15, 2 + (bloodAlcohol * 2.8));
+      const swaySpeed = Math.max(2.0, 5.0 - (bloodAlcohol * 0.6));
+
+      dom.viewport.style.setProperty('--sway-deg', `${swayDeg}deg`);
+      dom.viewport.style.setProperty('--sway-px', `${swayPx}px`);
+      dom.viewport.style.setProperty('--sway-speed', `${swaySpeed}s`);
+
+      dom.viewport.style.filter = `blur(${blurAmount}px) saturate(${saturateAmount}%) contrast(106%)`;
+      dom.viewport.classList.add('is-drunken');
+    }
+
+    /* ==========================================================================
+       9. GESTION DU SCORE (TAUX EN g/L) & LEADERBOARD LOCALSTORAGE
+       ========================================================================== */
+    const STORAGE_KEY = 'bar_game_bac_leaderboard_v2';
+
+    function getScores() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveScoreEntry(entry) {
+      try {
+        const scores = getScores();
+        scores.push(entry);
+        // Classement strictement par taux d'alcool (g/L) décroissant
+        scores.sort((a, b) => b.bac - a.bac || b.glasses - a.glasses);
+        // On conserve jusqu'à 30 entrées en stockage interne, le modal affichera le Top 10
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(scores.slice(0, 30)));
+      } catch (e) {
+        console.error('Erreur sauvegarde', e);
+      }
+    }
+
+    function getFavoriteDrinkName() {
+      let maxCount = -1;
+      let fav = DRINKS[0].name;
+      DRINKS.forEach(d => {
+        if (drinkCounts[d.id] > maxCount) {
+          maxCount = drinkCounts[d.id];
+          fav = d.name;
+        }
+      });
+      return maxCount > 0 ? fav : DRINKS[currentDrinkIndex].name;
+    }
+
+    function openSaveModal() {
+      audio.playClick();
+      dom.modalSummaryGlasses.innerText = glassesDrunk;
+      dom.modalSummaryBac.innerText = `${bloodAlcohol.toFixed(2)} g/L`;
+      dom.modalSummaryFav.innerText = getFavoriteDrinkName();
+
+      dom.playerNickname.value = '';
+      dom.charCounter.innerText = '0 / 20';
+      dom.errorMessage.classList.add('hidden');
+      dom.modalSave.classList.remove('hidden');
+
+      setTimeout(() => {
+        dom.playerNickname.focus();
+      }, 150);
+    }
+
+    function closeSaveModal() {
+      audio.playClick();
+      dom.modalSave.classList.add('hidden');
+    }
+
+    function handleFormSubmit() {
+      const pseudo = dom.playerNickname.value.trim();
+
+      if (pseudo.length === 0) {
+        dom.errorMessage.innerText = 'Veuillez saisir un pseudo (jusqu\'à 20 caractères).';
+        dom.errorMessage.classList.remove('hidden');
+        return;
+      }
+
+      if (pseudo.length > 20) {
+        dom.errorMessage.innerText = 'Le pseudo est limité à 20 caractères maximum.';
+        dom.errorMessage.classList.remove('hidden');
+        return;
+      }
+
+      const scoreEntry = {
+        name: pseudo.slice(0, 20),
+        bac: parseFloat(bloodAlcohol.toFixed(2)),
+        glasses: glassesDrunk,
+        favDrink: getFavoriteDrinkName(),
+        date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+      };
+
+      saveScoreEntry(scoreEntry);
+      closeSaveModal();
+      showToast(`Taux de ${scoreEntry.bac.toFixed(2)} g/L gravé au Panthéon ! 🏆`);
+      openLeaderboardModal();
+    }
+
+    function openLeaderboardModal() {
+      audio.playClick();
+      renderLeaderboard();
+      dom.modalLeaderboard.classList.remove('hidden');
+    }
+
+    function closeLeaderboardModal() {
+      audio.playClick();
+      dom.modalLeaderboard.classList.add('hidden');
+    }
+
+    function renderLeaderboard() {
+      const scores = getScores().slice(0, 10); // Restreint strictement au Top 10
+      dom.leaderboardList.innerHTML = '';
+
+      if (scores.length === 0) {
+        dom.leaderboardList.innerHTML = `
+          <div class="text-center py-8 text-stone-500 italic text-sm">
+            Aucun record dans le Top 10 pour l'instant.<br>Buvez et enregistrez votre premier taux d'alcool !
+          </div>
+        `;
+        return;
+      }
+
+      scores.forEach((item, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between p-2.5 sm:p-3 rounded-xl border ${
+          index < 3 
+            ? 'bg-rose-950/40 border-rose-500/40' 
+            : 'bg-stone-950/50 border-stone-800'
+        }`;
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="font-black text-base w-6 text-center ${index < 3 ? 'text-rose-400' : 'text-stone-500'}">${medal}</span>
+            <div class="truncate">
+              <div class="font-bold text-white text-sm truncate max-w-[150px] sm:max-w-[210px]" title="${escapeHTML(item.name)}">
+                ${escapeHTML(item.name)}
+              </div>
+              <div class="text-[10px] text-stone-400 flex items-center gap-1.5 truncate">
+                <span>${item.glasses} verres</span>
+                <span>•</span>
+                <span class="truncate">${escapeHTML(item.favDrink || 'Bière')}</span>
+                <span>•</span>
+                <span>${item.date || ''}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right pl-2 shrink-0">
+            <div class="font-mono font-black text-rose-400 text-sm sm:text-base">${Number(item.bac).toFixed(2)} g/L</div>
+            <div class="text-[9px] uppercase tracking-wider text-amber-400/80 font-semibold">Taux Atteint</div>
+          </div>
+        `;
+        dom.leaderboardList.appendChild(row);
+      });
+    }
+
+    function resetGame() {
+      glassesDrunk = 0;
+      bloodAlcohol = 0.00;
+      consecutiveChugStreak = 0;
+      releasesCountDuringGlass = 0;
+      lastDrinkFinishTimestamp = 0;
+      Object.keys(drinkCounts).forEach(k => drinkCounts[k] = 0);
+
+      dom.glassesCount.innerText = '0';
+      dom.bacCount.innerHTML = `0.00 <span class="text-xs font-semibold">g/L</span>`;
+      updateSpeedIndicator();
+
+      applyDrunkenEffects();
+      resetGlassFill();
+      closeLeaderboardModal();
+      showToast('Nouvelle table servie ! À votre santé ! 🍻');
+    }
+
+    function showToast(msg) {
+      dom.toast.innerText = msg;
+      dom.toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+      dom.toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        dom.toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+        dom.toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2400);
+    }
+
+    function escapeHTML(str) {
+      return (str || '').replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    /* ==========================================================================
+       10. GESTION TACTILE MOBILE & DESKTOP ROBUSTE
+       ========================================================================== */
+    function setupEventListeners() {
+      const btn = dom.btnDrink;
+
+      // Souris desktop
+      btn.addEventListener('mousedown', startDrinking);
+      window.addEventListener('mouseup', stopDrinking);
+      btn.addEventListener('mouseleave', stopDrinking);
+
+      // Support tactile mobile fluide avec blocage de sélection
+      btn.addEventListener('touchstart', (e) => {
+        startDrinking(e);
+      }, { passive: false });
+
+      btn.addEventListener('touchend', (e) => {
+        stopDrinking(e);
+      }, { passive: false });
+
+      btn.addEventListener('touchcancel', (e) => {
+        stopDrinking(e);
+      }, { passive: false });
+
+      // Bouton s'arrêter & enregistrer
+      dom.btnStopSave.addEventListener('click', () => {
+        if (glassesDrunk === 0 && bloodAlcohol === 0) {
+          showToast('Prenez au moins un premier verre pour enregistrer un taux d\'alcool ! 🍻');
+          return;
+        }
+        openSaveModal();
+      });
+
+      // Contrôle de longueur pseudo en direct (max 20 caractères)
+      dom.playerNickname.addEventListener('input', (e) => {
+        let val = e.target.value;
+        if (val.length > 20) {
+          e.target.value = val.slice(0, 20);
+        }
+        dom.charCounter.innerText = `${e.target.value.length} / 20`;
+        dom.errorMessage.classList.add('hidden');
+      });
+
+      dom.formSaveScore.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleFormSubmit();
+      });
+
+      dom.btnCancelModal.addEventListener('click', closeSaveModal);
+      // Leaderboard & Top 10
+      dom.btnTop10Main.addEventListener('click', openLeaderboardModal);
+      dom.btnShowScores.addEventListener('click', openLeaderboardModal);
+      dom.btnCloseLeaderboard.addEventListener('click', closeLeaderboardModal);
+      dom.btnNewGame.addEventListener('click', resetGame);
+
+      dom.btnClearScores.addEventListener('click', () => {
+        if (getScores().length === 0) return;
+        localStorage.removeItem(STORAGE_KEY);
+        renderLeaderboard();
+        showToast('Tableau des taux réinitialisé.');
+      });
+
+      // Bascule son
+      dom.btnSoundToggle.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        dom.soundStatus.innerText = soundEnabled ? 'ON' : 'OFF';
+        if (soundEnabled) audio.init();
+      });
+
+      // Fermeture modals par Échap
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (!dom.modalSave.classList.contains('hidden')) closeSaveModal();
+          if (!dom.modalLeaderboard.classList.contains('hidden')) closeLeaderboardModal();
+        }
+      });
+    }
+
+    /* Démarrage */
+    window.addEventListener('load', () => {
+      renderDrinkSelector();
+      updateGlassVisuals();
+      resetGlassFill();
+      updateSpeedIndicator();
+      setupEventListeners();
+    });
+  </script>
+</body>
+</html>

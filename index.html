@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="h-full select-none">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Le Dernier Verre</title>
+  <title>Le Dernier Verre - Épreuve d'Alcoolémie Virtuelle</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     * {
@@ -17,924 +19,1166 @@
       -webkit-user-select: none;
     }
 
-    :root {
-      --app-height: 100dvh;
-    }
-
-    html, body {
-      height: 100%;
-      height: var(--app-height);
-      margin: 0;
-      padding: 0;
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0c0805;
+      background-image: radial-gradient(circle at 50% 20%, #1f140b 0%, #110b06 60%, #080503 100%);
+      color: #f5eedc;
       overflow: hidden;
-      background-color: #0b0704;
-      font-family: 'Outfit', sans-serif;
-      color: #f7eed8;
+      touch-action: manipulation;
     }
 
-    .font-serif-title {
-      font-family: 'Playfair Display', serif;
-    }
-
-    /* Ambiance Bar sombre & dorée */
-    .bg-bar-gradient {
-      background: radial-gradient(circle at 50% 12%, #1e1107 0%, #0c0704 65%, #050302 100%);
-    }
-
-    .glow-gold {
-      text-shadow: 0 0 10px rgba(251, 191, 36, 0.55), 0 0 20px rgba(217, 119, 6, 0.35);
-    }
-
-    /* Grille de cartes boissons à dimensions stables : 2 rangées de 3 colonnes défilables horizontalement */
-    .drinks-slider-container {
-      overflow-x: auto;
-      overflow-y: hidden;
-      scroll-snap-type: x mandatory;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      -webkit-overflow-scrolling: touch;
-    }
-    .drinks-slider-container::-webkit-scrollbar {
-      display: none;
-    }
-
+    /* Grille fixe 2x3 pour les boissons afin d'éviter tout étirement ou écrasement */
     .drinks-grid {
       display: grid;
-      grid-template-rows: repeat(2, 52px);
-      grid-auto-flow: column;
-      grid-auto-columns: calc((100% - 14px) / 3);
-      gap: 7px;
-      padding: 1px 1px 2px 1px;
-    }
-
-    @media (max-width: 360px) {
-      .drinks-grid {
-        grid-auto-columns: 102px;
-      }
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: repeat(2, 48px);
+      gap: 6px;
     }
 
     .drink-card {
-      scroll-snap-align: start;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 5px 8px;
-      border-radius: 10px;
-      border: 1px solid #2e1e14;
-      background: linear-gradient(180deg, #18110b 0%, #100a06 100%);
-      transition: all 0.15s ease-out;
+      transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;
-      position: relative;
+    }
+
+    .drink-card:active {
+      transform: scale(0.97);
     }
 
     .drink-card.active {
-      border: 1.5px solid #e11d48;
-      background: linear-gradient(180deg, #2c1214 0%, #18080a 100%);
-      box-shadow: 0 0 12px rgba(225, 29, 72, 0.4), inset 0 0 8px rgba(225, 29, 72, 0.25);
+      border-color: #f59e0b !important;
+      background: linear-gradient(135deg, rgba(120, 53, 15, 0.45), rgba(69, 26, 3, 0.7)) !important;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
     }
 
-    /* Effets de flottement et d'ébriété */
-    #game-viewport {
-      transition: filter 0.3s ease, transform 0.4s ease;
+    /* Calque principal et balancement d'ivresse / ataxie motrice */
+    #main-content {
       transform-origin: center center;
+      transition: filter 0.2s ease, transform 0.2s ease;
     }
 
     @keyframes drunkenSway {
       0% { transform: rotate(0deg) translate(0px, 0px); }
-      25% { transform: rotate(var(--sway-deg, 1.5deg)) translate(var(--sway-px, 4px), -2px); }
-      50% { transform: rotate(calc(-1 * var(--sway-deg, 1.5deg))) translate(calc(-1 * var(--sway-px, 4px)), 3px); }
-      75% { transform: rotate(calc(var(--sway-deg, 1.5deg) * 0.7)) translate(2px, calc(var(--sway-px, 4px) * 0.7)); }
+      25% { transform: rotate(calc(var(--sway-deg, 0deg) * 0.9)) translate(calc(var(--sway-px, 0px) * -1), var(--sway-px, 0px)); }
+      50% { transform: rotate(calc(var(--sway-deg, 0deg) * -1.1)) translate(var(--sway-px, 0px), calc(var(--sway-px, 0px) * -0.6)); }
+      75% { transform: rotate(calc(var(--sway-deg, 0deg) * 0.7)) translate(calc(var(--sway-px, 0px) * 0.8), calc(var(--sway-px, 0px) * 0.9)); }
       100% { transform: rotate(0deg) translate(0px, 0px); }
     }
 
-    .is-drunken {
-      animation: drunkenSway var(--sway-speed, 4s) infinite ease-in-out;
+    .is-drunken-sway {
+      animation: drunkenSway var(--sway-speed, 4s) ease-in-out infinite alternate;
     }
 
-    /* Vagues de liquide SVG */
-    @keyframes waveMotion {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    .liquid-wave {
-      animation: waveMotion 2.2s linear infinite;
-    }
-
-    @keyframes floatUp {
-      0% { transform: translateY(0) scale(0.6); opacity: 0; }
-      25% { opacity: 0.75; }
-      80% { opacity: 0.75; }
-      100% { transform: translateY(-100px) scale(1.1); opacity: 0; }
-    }
-    .bubble {
-      animation: floatUp 1.8s infinite ease-in;
+    /* Secousse soudaine du hoquet */
+    @keyframes hiccupShake {
+      0% { transform: translate(0, 0) scale(1); filter: brightness(1); }
+      20% { transform: translate(-4px, -12px) rotate(-1.5deg) scale(1.02); filter: brightness(1.4) hue-rotate(30deg); }
+      50% { transform: translate(3px, 6px) rotate(1deg) scale(0.99); }
+      100% { transform: translate(0, 0) scale(1); filter: brightness(1); }
     }
 
-    /* Bouton Boire Action Pulsation */
-    .btn-drink-pulse {
-      box-shadow: 0 4px 18px rgba(234, 88, 12, 0.45);
-    }
-    .drinking-active {
-      transform: scale(0.98) !important;
-      box-shadow: 0 0 28px rgba(249, 115, 22, 0.8), inset 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-      filter: brightness(0.92);
+    .hiccup-active {
+      animation: hiccupShake 0.28s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
     }
 
-    .touch-target {
-      touch-action: none !important;
+    /* Calque de diplopie (vision double asynchrone) */
+    @keyframes doubleShift {
+      0% { transform: translate(var(--dip-x, 0px), var(--dip-y, 0px)) rotate(var(--dip-rot, 0deg)); }
+      33% { transform: translate(calc(var(--dip-x, 0px) * -0.9), calc(var(--dip-y, 0px) * 1.3)) rotate(calc(var(--dip-rot, 0deg) * -1)); }
+      66% { transform: translate(calc(var(--dip-x, 0px) * 1.1), calc(var(--dip-y, 0px) * -0.7)) rotate(calc(var(--dip-rot, 0deg) * 0.5)); }
+      100% { transform: translate(calc(var(--dip-x, 0px) * -1.2), calc(var(--dip-y, 0px) * -0.8)) rotate(calc(var(--dip-rot, 0deg) * -0.8)); }
     }
 
-    /* Shake nausée */
-    @keyframes nauseousShake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-6px); }
-      40% { transform: translateX(6px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
+    #double-vision-layer {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      mix-blend-mode: screen;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      animation: doubleShift 3.2s ease-in-out infinite alternate;
+      z-index: 20;
     }
-    .shake-nausea {
-      animation: nauseousShake 0.4s ease-in-out infinite;
+
+    /* Effet tunnel / Vignette pulsante */
+    #tunnel-vignette {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 15;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, var(--vignette-darkness, 0.85)) 92%);
+    }
+
+    @keyframes pulseVignette {
+      0%, 100% { transform: scale(1); opacity: var(--vignette-base-op, 0.4); }
+      50% { transform: scale(1.05); opacity: calc(var(--vignette-base-op, 0.4) * 1.35); }
+    }
+
+    .vignette-pulsing {
+      animation: pulseVignette 1.2s ease-in-out infinite;
+    }
+
+    /* Conteneur d'oscillation du bouton pour simuler l'ataxie motrice */
+    #btn-drink-wrapper {
+      transition: transform 0.25s ease, width 0.3s ease;
+      will-change: transform, width;
+    }
+
+    @keyframes buttonWobble {
+      0% { transform: translate(0px, 0px) rotate(0deg); }
+      25% { transform: translate(var(--btn-wobble-x, 0px), calc(var(--btn-wobble-y, 0px) * -0.8)) rotate(var(--btn-wobble-r, 0deg)); }
+      50% { transform: translate(calc(var(--btn-wobble-x, 0px) * -1), var(--btn-wobble-y, 0px)) rotate(calc(var(--btn-wobble-r, 0deg) * -1)); }
+      75% { transform: translate(calc(var(--btn-wobble-x, 0px) * 0.7), calc(var(--btn-wobble-y, 0px) * 0.9)) rotate(calc(var(--btn-wobble-r, 0deg) * 0.5)); }
+      100% { transform: translate(0px, 0px) rotate(0deg); }
+    }
+
+    .is-button-wobbling {
+      animation: buttonWobble var(--btn-wobble-dur, 2.5s) ease-in-out infinite alternate;
+    }
+
+    /* Bouton principal "Maintenir pour boire" */
+    #btn-drink {
+      touch-action: none;
+      -webkit-touch-callout: none;
+      transition: transform 0.1s ease, filter 0.15s ease, box-shadow 0.15s ease, padding 0.3s ease, font-size 0.3s ease;
+      transform-origin: center center;
+    }
+
+    #btn-drink:active, #btn-drink.is-drinking {
+      filter: brightness(1.2);
+      box-shadow: 0 0 20px rgba(234, 88, 12, 0.85);
+    }
+
+    /* Verre & Liquide */
+    .foam-bubble {
+      animation: foamOscillate 1.8s ease-in-out infinite alternate;
+    }
+    @keyframes foamOscillate {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-3px); }
+    }
+
+    .ice-cube {
+      animation: iceFloat 2.2s ease-in-out infinite alternate;
+    }
+    @keyframes iceFloat {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-4px) rotate(4deg); }
     }
   </style>
 </head>
-<body class="bg-bar-gradient flex flex-col justify-between w-full h-[100dvh]">
 
-  <!-- Conteneur d'effet d'ivresse -->
-  <div id="game-viewport" class="w-full h-full flex flex-col justify-between px-3 pt-2.5 pb-2 max-w-md mx-auto">
+<body class="h-[100dvh] w-full flex flex-col justify-between overflow-hidden relative">
 
-    <!-- 1. EN-TÊTE CONFORME À L'IMAGE DE RÉFÉRENCE -->
-    <header class="w-full flex items-center justify-between gap-2 shrink-0">
-      <!-- Gauche : Titre et Bière -->
-      <div class="flex items-center gap-2">
-        <span class="text-3xl filter drop-shadow">🍻</span>
-        <div class="leading-none">
-          <div class="text-amber-300 font-serif-title font-bold text-base glow-gold">Le Dernier</div>
-          <div class="text-amber-300 font-serif-title font-bold text-base glow-gold">Verre</div>
+  <!-- Vignette de vision tunnel pulsante -->
+  <div id="tunnel-vignette"></div>
+
+  <!-- Calque Vision Double (Diplopie d'ivresse) -->
+  <div id="double-vision-layer" aria-hidden="true"></div>
+
+  <!-- Conteneur d'affichage principal (adapté à 100dvh mobile) -->
+  <div id="main-content" class="w-full h-full max-w-md mx-auto flex flex-col justify-between px-3 pt-2 pb-2 relative z-10">
+
+    <!-- 1. En-tête Compact (Titre + Stats en 1 ligne/bloc) -->
+    <header class="w-full flex flex-col gap-1.5 flex-shrink-0">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="text-2xl filter drop-shadow">🍻</span>
+          <div>
+            <h1 class="font-extrabold text-sm tracking-wide text-amber-300 drop-shadow-sm leading-tight">Le Dernier Verre</h1>
+            <p class="text-[9px] uppercase tracking-wider text-amber-500/80 font-bold leading-none">Alcoolémie Virtuelle</p>
+          </div>
+        </div>
+
+        <!-- Timer 60s -->
+        <div id="timer-box" class="px-2.5 py-1 rounded-lg bg-stone-900/90 border border-amber-600/40 flex items-center gap-1.5 shadow-inner">
+          <span class="text-xs text-amber-400">⏱️</span>
+          <span id="display-timer" class="font-mono font-black text-sm tracking-widest text-amber-200">01:00</span>
         </div>
       </div>
 
-      <!-- Droite : Carte récapitulatif 3 colonnes -->
-      <div class="flex items-center gap-2 bg-stone-950/80 border border-stone-800 rounded-xl px-2.5 py-1.5 shadow-md">
-        <div class="text-center min-w-[38px]">
-          <div class="text-[9px] font-bold text-amber-500 uppercase tracking-tight">Verres</div>
-          <div id="glasses-count" class="text-sm font-black text-white leading-tight">0</div>
+      <!-- Dashboard des compteurs -->
+      <div class="grid grid-cols-3 gap-1.5 bg-stone-950/80 border border-amber-800/40 rounded-xl p-1.5 shadow-md">
+        <!-- Verres bus -->
+        <div class="flex flex-col items-center justify-center text-center">
+          <span class="text-[9px] uppercase tracking-wider text-stone-400 font-semibold">Verres</span>
+          <span id="display-glasses" class="text-base font-extrabold text-stone-100 leading-tight">0</span>
         </div>
-        <div class="h-6 w-px bg-stone-800"></div>
-        <div class="text-center min-w-[58px]">
-          <div class="text-[9px] font-bold text-rose-400 uppercase tracking-tight">Taux (Score)</div>
-          <div id="bac-count" class="text-sm font-black text-rose-400 font-mono leading-tight">0.00 <span class="text-[10px] text-rose-300">g/L</span></div>
+
+        <!-- Taux d'alcool (Score) -->
+        <div class="flex flex-col items-center justify-center text-center border-x border-amber-900/40 px-1">
+          <span class="text-[9px] uppercase tracking-wider text-rose-400 font-bold">Taux (Score)</span>
+          <div class="flex items-baseline gap-0.5 leading-tight">
+            <span id="display-bac" class="text-base font-black text-rose-300">0.00</span>
+            <span class="text-[9px] font-semibold text-rose-400/80">g/L</span>
+          </div>
         </div>
-        <div class="h-6 w-px bg-stone-800"></div>
-        <div class="text-center min-w-[50px]">
-          <div class="text-[9px] font-bold text-amber-500 uppercase tracking-tight">Vitesse</div>
-          <div id="speed-indicator" class="text-[10px] font-bold text-amber-300 leading-tight">100% <span class="text-[9px] block text-amber-400/90 font-medium">(Rapide)</span></div>
+
+        <!-- Vitesse de déglutition -->
+        <div class="flex flex-col items-center justify-center text-center">
+          <span class="text-[9px] uppercase tracking-wider text-amber-400 font-semibold">Déglutition</span>
+          <span id="display-speed" class="text-base font-bold text-amber-300 leading-tight">100%</span>
         </div>
       </div>
     </header>
 
-    <!-- 2. CARTE DES BOISSONS (2 LIGNES DE 3 CARTES PROPORTIONNÉES SANS DÉFORMATION) -->
-    <section class="w-full shrink-0 mt-2">
-      <div class="flex items-center justify-between mb-1 px-0.5">
-        <h2 class="text-[10px] font-black uppercase tracking-wider text-amber-400/95">
-          Boissons (Ordre croissant en g/L)
-        </h2>
-        <span class="text-[10px] italic text-amber-200/50">Glissez ➔</span>
+    <!-- 2. Carte des Boissons (Fixe 2 rangées x 3 colonnes, g/L croissant) -->
+    <section class="w-full flex flex-col gap-1 flex-shrink-0 my-1">
+      <div class="flex items-center justify-between px-0.5">
+        <span class="text-[10px] font-bold tracking-wide text-amber-400/90 uppercase">Carte des Boissons</span>
+        <span class="text-[9px] text-stone-400 italic font-medium">De la plus douce à la plus forte</span>
       </div>
 
-      <div class="drinks-slider-container w-full">
-        <div id="drink-selector-grid" class="drinks-grid">
-          <!-- Injecté dynamiquement par JS -->
-        </div>
+      <div class="drinks-grid w-full">
+        <!-- 1. Bière Blonde -->
+        <button type="button" data-index="0" class="drink-card active rounded-lg p-1 border border-stone-800 bg-stone-950/70 flex flex-col justify-between text-left">
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs">🍺</span>
+            <span class="text-[8px] font-bold px-1 rounded bg-rose-950/70 text-rose-300 border border-rose-800/40">+0.20</span>
+          </div>
+          <span class="text-[10px] font-bold text-stone-200 truncate leading-none">Bière Blonde</span>
+          <span class="text-[8px] text-amber-500 font-medium leading-none">Rang #1</span>
+        </button>
+
+        <!-- 2. Vin Rosé -->
+        <button type="button" data-index="1" class="drink-card rounded-lg p-1 border border-stone-800 bg-stone-950/70 flex flex-col justify-between text-left">
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs">🌸</span>
+            <span class="text-[8px] font-bold px-1 rounded bg-rose-950/70 text-rose-300 border border-rose-800/40">+0.25</span>
+          </div>
+          <span class="text-[10px] font-bold text-stone-200 truncate leading-none">Vin Rosé</span>
+          <span class="text-[8px] text-amber-500 font-medium leading-none">Rang #2</span>
+        </button>
+
+        <!-- 3. Vin Blanc -->
+        <button type="button" data-index="2" class="drink-card rounded-lg p-1 border border-stone-800 bg-stone-950/70 flex flex-col justify-between text-left">
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs">🥂</span>
+            <span class="text-[8px] font-bold px-1 rounded bg-rose-950/70 text-rose-300 border border-rose-800/40">+0.26</span>
+          </div>
+          <span class="text-[10px] font-bold text-stone-200 truncate leading-none">Vin Blanc</span>
+          <span class="text-[8px] text-amber-500 font-medium leading-none">Rang #3</span>
+        </button>
+
+        <!-- 4. Vin Rouge -->
+        <button type="button" data-index="3" class="drink-card rounded-lg p-1 border border-stone-800 bg-stone-950/70 flex flex-col justify-between text-left">
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs">🍷</span>
+            <span class="text-[8px] font-bold px-1 rounded bg-rose-950/70 text-rose-300 border border-rose-800/40">+0.28</span>
+          </div>
+          <span class="text-[10px] font-bold text-stone-200 truncate leading-none">Vin Rouge</span>
+          <span class="text-[8px] text-amber-500 font-medium leading-none">Rang #4</span>
+        </button>
+
+        <!-- 5. Whisky Coca -->
+        <button type="button" data-index="4" class="drink-card rounded-lg p-1 border border-stone-800 bg-stone-950/70 flex flex-col justify-between text-left">
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs">🥃</span>
+            <span class="text-[8px] font-bold px-1 rounded bg-rose-950/70 text-rose-300 border border-rose-800/40">+0.35</span>
+          </div>
+          <span class="text-[10px] font-bold text-stone-200 truncate leading-none">Whisky Coca</span>
+          <span class="text-[8px] text-amber-500 font-medium leading-none">Rang #5</span>
+        </button>
+
+        <!-- 6. Vodka Redbull -->
+        <button type="button" data-index="5" class="drink-card rounded-lg p-1 border border-stone-800 bg-stone-950/70 flex flex-col justify-between text-left">
+          <div class="flex items-center justify-between w-full">
+            <span class="text-xs">⚡</span>
+            <span class="text-[8px] font-bold px-1 rounded bg-rose-950/70 text-rose-300 border border-rose-800/40">+0.42</span>
+          </div>
+          <span class="text-[10px] font-bold text-stone-200 truncate leading-none">Vodka Redbull</span>
+          <span class="text-[8px] text-amber-500 font-medium leading-none">Rang #6</span>
+        </button>
       </div>
     </section>
 
-    <!-- 3. ZONE CENTRALE : LE VERRE DE RÉFÉRENCE ET JAUGE EN OVALE -->
-    <main class="w-full flex-1 flex flex-col items-center justify-center my-auto min-h-0 relative">
+    <!-- 3. Espace Central : Verre SVG & Badge de Pourcentage Ovale -->
+    <main id="glass-center-area" class="flex-1 flex flex-col items-center justify-center relative min-h-0 py-0.5">
 
-      <!-- Alerte Nausée / Refus de boire de 7 secondes -->
-      <div id="nausea-alert" class="absolute top-0 z-30 w-full max-w-xs p-2 rounded-xl bg-rose-950/95 border border-rose-500 text-rose-200 text-center shadow-xl hidden">
-        <div class="flex items-center justify-center gap-1.5 font-bold text-xs text-rose-300">
-          <span class="text-lg shake-nausea">🤢</span>
-          <span>ESTOMAC PLEIN ! REFUS DE BOIRE</span>
-        </div>
-        <div class="w-full bg-stone-900 rounded-full h-1.5 mt-1.5 overflow-hidden border border-rose-500/40">
-          <div id="cooldown-bar" class="bg-gradient-to-r from-rose-500 to-amber-500 h-1.5 rounded-full transition-all duration-100" style="width: 100%"></div>
-        </div>
-        <div id="cooldown-timer-text" class="text-[10px] font-mono font-bold mt-0.5 text-rose-200">Pause : 7.0s</div>
-      </div>
-
-      <!-- Verre SVG aux proportions du mock-up -->
-      <div class="relative w-36 h-48 xs:w-40 xs:h-52 flex items-center justify-center shrink-0">
-        <!-- Glow d'ambiance -->
-        <div id="drink-glow" class="absolute inset-x-4 inset-y-6 rounded-full blur-2xl opacity-25 transition-all duration-700 bg-amber-500 pointer-events-none"></div>
-
-        <svg class="w-full h-full overflow-visible" viewBox="0 0 160 210">
+      <!-- Verre SVG -->
+      <div class="relative w-36 sm:w-44 max-h-[220px] flex items-center justify-center">
+        <svg viewBox="0 0 200 300" class="w-full h-auto drop-shadow-2xl overflow-visible">
           <defs>
-            <!-- Forme intérieure exacte du verre de l'image -->
+            <!-- Masque intérieur du verre -->
             <clipPath id="glass-inner-clip">
-              <polygon points="32,24 128,24 120,165 40,165" />
+              <polygon points="38,20 162,20 148,272 52,272" />
             </clipPath>
 
-            <linearGradient id="liquidGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" id="grad-stop-1" stop-color="#f59e0b" />
-              <stop offset="50%" id="grad-stop-2" stop-color="#fbbf24" />
-              <stop offset="100%" id="grad-stop-3" stop-color="#d97706" />
+            <!-- Dégradé du verre transparent -->
+            <linearGradient id="glass-reflection" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity="0.32" />
+              <stop offset="25%" stop-color="#ffffff" stop-opacity="0.08" />
+              <stop offset="75%" stop-color="#ffffff" stop-opacity="0.03" />
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0.25" />
             </linearGradient>
 
-            <linearGradient id="glassReflection" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="rgba(255,255,255,0.4)" />
-              <stop offset="25%" stop-color="rgba(255,255,255,0.06)" />
-              <stop offset="85%" stop-color="rgba(255,255,255,0.02)" />
-              <stop offset="100%" stop-color="rgba(255,255,255,0.3)" />
+            <!-- Dégradé liquide par défaut (Bière) -->
+            <linearGradient id="liquid-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop id="grad-stop-1" offset="0%" stop-color="#f59e0b" />
+              <stop id="grad-stop-2" offset="100%" stop-color="#d97706" />
             </linearGradient>
           </defs>
 
-          <!-- Pied / Base du verre -->
-          <ellipse cx="80" cy="180" rx="30" ry="4" fill="#1b120c" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" />
-          <path d="M 77,165 L 77,179 L 83,179 L 83,165 Z" fill="rgba(255,255,255,0.22)" />
+          <!-- Pied / Socle du verre -->
+          <ellipse cx="100" cy="275" rx="55" ry="10" fill="#292015" stroke="#8c6d37" stroke-width="2.5" />
 
-          <!-- Fond du calice -->
-          <polygon points="32,24 128,24 120,165 40,165" fill="rgba(255,255,255,0.02)" />
-
-          <!-- Liquide interactif -->
+          <!-- Groupe du Liquide avec Masque de rognage -->
           <g clip-path="url(#glass-inner-clip)">
-            <rect id="liquid-body" x="28" y="24" width="104" height="142" fill="url(#liquidGrad)" />
+            <!-- Rectangle de niveau du liquide -->
+            <rect id="liquid-rect" x="20" y="30" width="160" height="250" fill="url(#liquid-grad)" />
 
-            <!-- Glaçons -->
-            <g id="ice-cubes" class="transition-opacity duration-300" opacity="0">
-              <rect x="52" y="115" width="22" height="22" rx="3" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(12 63 126)"/>
-              <rect x="85" y="120" width="20" height="20" rx="3" fill="rgba(255,255,255,0.35)" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" transform="rotate(-15 95 130)"/>
+            <!-- Glaçons (Whisky & Vodka) -->
+            <g id="ice-group" style="display: none;">
+              <rect class="ice-cube" x="65" y="140" width="32" height="30" rx="6" fill="#ffffff" fill-opacity="0.28" stroke="#ffffff" stroke-width="1.5" />
+              <rect class="ice-cube" x="105" y="165" width="28" height="28" rx="6" fill="#ffffff" fill-opacity="0.24" stroke="#ffffff" stroke-width="1.5" />
             </g>
 
-            <!-- Bulles pétillantes -->
-            <g id="bubbles-group">
-              <circle class="bubble" cx="62" cy="155" r="2.5" fill="rgba(255,255,255,0.55)" style="animation-delay: 0.1s;"/>
-              <circle class="bubble" cx="95" cy="145" r="2" fill="rgba(255,255,255,0.5)" style="animation-delay: 0.8s;"/>
-              <circle class="bubble" cx="76" cy="160" r="3.2" fill="rgba(255,255,255,0.65)" style="animation-delay: 1.3s;"/>
-              <circle class="bubble" cx="106" cy="150" r="2.5" fill="rgba(255,255,255,0.45)" style="animation-delay: 0.4s;"/>
+            <!-- Mousse de bière animée -->
+            <g id="foam-group">
+              <ellipse id="foam-top" class="foam-bubble" cx="100" cy="30" rx="65" ry="16" fill="#fef3c7" fill-opacity="0.95" />
+              <circle class="foam-bubble" cx="60" cy="32" r="14" fill="#ffffff" fill-opacity="0.95" />
+              <circle class="foam-bubble" cx="88" cy="28" r="16" fill="#ffffff" fill-opacity="0.95" />
+              <circle class="foam-bubble" cx="118" cy="28" r="16" fill="#ffffff" fill-opacity="0.95" />
+              <circle class="foam-bubble" cx="142" cy="32" r="13" fill="#ffffff" fill-opacity="0.95" />
             </g>
-
-            <!-- Mousse onctueuse de bière (comme sur la photo de référence) -->
-            <g id="beer-foam" class="transition-all duration-200" opacity="1" transform="translate(0, 0)">
-              <ellipse id="foam-ellipse" cx="80" cy="28" rx="48" ry="9" fill="#fffdf2" />
-              <circle cx="50" cy="27" r="9" fill="#fffdf2" />
-              <circle cx="68" cy="24" r="10" fill="#fffdf2" />
-              <circle cx="92" cy="24" r="10.5" fill="#fffdf2" />
-              <circle cx="110" cy="27" r="8.5" fill="#fffdf2" />
-            </g>
-
-            <!-- Vague de niveau -->
-            <path id="liquid-wave-path" class="liquid-wave" d="M 0,0 Q 15,5 30,0 T 60,0 T 90,0 T 120,0 T 150,0 T 180,0 V 15 H 0 Z" fill="rgba(255,255,255,0.25)" transform="translate(0, 24)"/>
           </g>
 
-          <!-- Paroi extérieure en verre et reflets -->
-          <polygon points="32,24 128,24 120,165 40,165" fill="url(#glassReflection)" stroke="rgba(255, 255, 255, 0.45)" stroke-width="2.5" />
-          <ellipse cx="80" cy="24" rx="48" ry="6" fill="none" stroke="rgba(255, 255, 255, 0.65)" stroke-width="2" />
+          <!-- Contour du verre en verre transparent -->
+          <polygon points="38,20 162,20 148,272 52,272" fill="url(#glass-reflection)" stroke="#c4a159" stroke-width="3" stroke-linejoin="round" />
+          <ellipse cx="100" cy="20" rx="62" ry="9" fill="none" stroke="#e8caa4" stroke-width="2" />
         </svg>
 
-        <!-- Badge Ovale Cerclé d'Or (exactement comme sur l'image de référence) -->
-        <div class="absolute -bottom-2 flex items-center justify-center">
-          <div class="bg-black/90 border-2 border-amber-600/75 rounded-full px-5 py-1 shadow-lg backdrop-blur flex items-center justify-center">
-            <span id="drink-percent-text" class="font-mono text-xl xs:text-2xl font-black text-amber-200 tracking-wider">
-              100%
-            </span>
-          </div>
+        <!-- Badge Ovale Cerclé d'Or : Pourcentage Restant -->
+        <div class="absolute -bottom-2.5 z-10 px-4 py-0.5 rounded-full bg-stone-950/95 border-2 border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)] flex items-center justify-center">
+          <span id="display-percent" class="text-sm font-black text-amber-300 font-mono tracking-wider">100%</span>
         </div>
       </div>
 
-      <!-- Titre et description de la boisson active -->
-      <div class="text-center mt-3 shrink-0">
-        <h3 id="current-drink-name" class="text-base font-extrabold text-amber-300 leading-tight">Bière Blonde</h3>
-        <p id="current-drink-desc" class="text-[11px] text-amber-100/70 max-w-xs mx-auto leading-tight truncate mt-0.5">
-          Fraîche et légère avec mousse généreuse (+0.20 g/L)
-        </p>
+      <!-- Nom de la boisson en cours -->
+      <div class="mt-4 text-center">
+        <span id="current-drink-name" class="text-xs font-black text-amber-200 tracking-wide">Bière Blonde</span>
+        <span id="current-drink-sub" class="block text-[9px] text-amber-500/80 font-semibold leading-none mt-0.5">+0.20 g/L par verre</span>
       </div>
 
+      <!-- Alerte Nausée / Refus de Boire (7s) -->
+      <div id="nausea-panel" class="hidden absolute inset-x-2 top-4 bg-rose-950/95 border-2 border-rose-600 rounded-xl p-2.5 shadow-2xl flex-col items-center text-center z-30 animate-bounce">
+        <span class="text-xl">🤢</span>
+        <p class="text-xs font-black text-rose-200 uppercase mt-0.5">Estomac Saturé !</p>
+        <p class="text-[10px] text-rose-300 font-medium">Deux culs-secs d'affilée ! Respire un peu...</p>
+        <div class="w-full bg-stone-900 rounded-full h-2 mt-2 border border-rose-800/80 overflow-hidden">
+          <div id="nausea-progress" class="bg-rose-500 h-full w-full transition-all duration-100 ease-linear"></div>
+        </div>
+        <span id="nausea-countdown" class="text-[11px] font-mono font-bold text-rose-200 mt-1">7.0s</span>
+      </div>
     </main>
 
-    <!-- 4. BAS DE PAGE CONFORME À L'IMAGE DE RÉFÉRENCE -->
-    <footer class="w-full shrink-0 flex flex-col gap-2 pt-1 pb-1">
+    <!-- 4. Contrôles & Actions : Bouton Boire Rétrécissant + Boutons Bas -->
+    <footer class="w-full flex flex-col gap-2 flex-shrink-0">
+      
+      <!-- Conteneur d'oscillation pour perte de précision motrice -->
+      <div id="btn-drink-wrapper" class="w-full flex justify-center items-center">
+        <!-- Bouton MAINTENIR POUR BOIRE (taille dynamique et texte baveux) -->
+        <button id="btn-drink" type="button" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-500 text-stone-950 font-black text-sm tracking-wider uppercase shadow-[0_4px_16px_rgba(217,119,6,0.45)] border-t border-amber-300 active:shadow-inner flex items-center justify-center gap-2">
+          <span id="btn-drink-icon" class="text-lg">🍺</span>
+          <span id="btn-drink-text">Maintenir pour Boire</span>
+        </button>
+      </div>
 
-      <!-- Bouton Orange Dégradé : MAINTENIR POUR BOIRE -->
-      <button id="btn-drink" 
-              class="touch-target btn-drink-pulse w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 text-white font-black text-lg xs:text-xl uppercase tracking-wider shadow-lg border border-amber-300/30 cursor-pointer transition transform active:scale-98">
-        <span class="flex items-center justify-center gap-2 pointer-events-none">
-          <span id="drink-icon-btn" class="text-2xl">🍺</span>
-          <span id="drink-text-btn">MAINTENIR POUR BOIRE</span>
-        </span>
-      </button>
+      <!-- 2 Boutons Inférieurs : Recommencer & Top 10 -->
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-restart" type="button" class="py-2.5 px-3 rounded-xl bg-stone-900/90 border border-stone-800 hover:border-amber-700/60 text-stone-300 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow">
+          <span>🔄</span>
+          <span>Recommencer</span>
+        </button>
 
-      <!-- Rangée des boutons d'actions : Top 10 + Enregistrer mon taux (g/L) -->
-      <div class="w-full flex gap-2">
-        <!-- Bouton Top 10 -->
-        <button id="btn-top10" 
-                class="py-2.5 px-4 rounded-xl bg-gradient-to-b from-[#2a170d] to-[#1a0e08] border border-amber-700/60 text-amber-300 font-bold text-xs xs:text-sm flex items-center justify-center gap-1.5 shadow-md active:bg-amber-950 transition cursor-pointer shrink-0">
+        <button id="btn-top10" type="button" class="py-2.5 px-3 rounded-xl bg-gradient-to-b from-stone-900 to-stone-950 border border-amber-600/50 hover:border-amber-500 text-amber-300 font-extrabold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow">
           <span>🏆</span>
           <span>Top 10</span>
         </button>
-
-        <!-- Bouton Enregistrer mon taux -->
-        <button id="btn-save-score" 
-                class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-b from-[#200e12] to-[#15070a] border border-rose-600/60 text-rose-300 font-bold text-xs xs:text-sm flex items-center justify-center gap-1.5 shadow-md active:bg-rose-950 transition cursor-pointer">
-          <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
-          <span class="truncate">Enregistrer mon taux (g/L)</span>
-        </button>
       </div>
-
     </footer>
-
   </div>
 
-  <!-- MODAL : ENREGISTREMENT PSEUDO (20 CARACTÈRES MAX) -->
-  <div id="modal-save" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="w-full max-w-sm bg-stone-900 border-2 border-rose-600/80 rounded-2xl p-5 shadow-2xl relative">
-      <div class="text-center mb-3">
-        <div class="text-3xl mb-1">🏁</div>
-        <h2 class="text-xl font-black font-serif-title text-rose-400">Enregistrer votre Taux</h2>
-        <p class="text-xs text-stone-300 mt-0.5">Fin de dégustation au bar !</p>
-      </div>
+  <!-- MODALE 1 : Fin des 60 Secondes (Enregistrement du Score g/L) -->
+  <div id="modal-gameover" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-stone-900 to-stone-950 border-2 border-amber-500/80 rounded-2xl w-full max-w-sm p-4 text-center shadow-2xl relative">
+      <span class="text-3xl">🏁</span>
+      <h2 class="text-lg font-black text-amber-300 uppercase mt-1">Temps Écoulé !</h2>
+      <p class="text-[11px] text-stone-400 font-medium">Les 60 secondes sont passées. Voici votre état :</p>
 
-      <div class="bg-stone-950/80 rounded-xl p-3 mb-3 border border-stone-800 flex justify-around text-center">
+      <!-- Récapitulatif -->
+      <div class="bg-stone-900/90 border border-amber-900/40 rounded-xl p-2.5 my-3 grid grid-cols-2 gap-2 text-left">
         <div>
-          <div class="text-[9px] uppercase text-stone-400 font-bold">Verres</div>
-          <div id="modal-summary-glasses" class="text-lg font-black text-white">0</div>
+          <span class="text-[9px] uppercase tracking-wider text-stone-400 block font-semibold">Taux Final (Score)</span>
+          <span id="final-bac" class="text-lg font-black text-rose-400">0.00 g/L</span>
         </div>
-        <div class="w-px bg-stone-800"></div>
         <div>
-          <div class="text-[9px] uppercase text-rose-400 font-bold">Taux Final</div>
-          <div id="modal-summary-bac" class="text-lg font-black text-rose-400 font-mono">0.00 g/L</div>
-        </div>
-        <div class="w-px bg-stone-800"></div>
-        <div>
-          <div class="text-[9px] uppercase text-stone-400 font-bold">Fétiche</div>
-          <div id="modal-summary-fav" class="text-xs font-bold text-amber-300 mt-1 max-w-[80px] truncate">-</div>
+          <span class="text-[9px] uppercase tracking-wider text-stone-400 block font-semibold">Verres Vides</span>
+          <span id="final-glasses" class="text-lg font-black text-amber-300">0</span>
         </div>
       </div>
 
-      <form id="form-save-score" onsubmit="return false;" class="space-y-3">
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label for="player-nickname" class="text-xs font-semibold text-amber-200">Pseudo :</label>
-            <span id="char-counter" class="text-xs font-mono text-amber-400">0 / 20</span>
-          </div>
-          <input 
-            type="text" 
-            id="player-nickname" 
-            maxlength="20" 
-            placeholder="Votre pseudo (20 car max)..." 
-            class="w-full px-3 py-2.5 rounded-xl bg-stone-950 border border-amber-600/60 focus:border-rose-400 text-white text-sm focus:outline-none"
-            autocomplete="off"
-            required
-          >
-          <p id="error-message" class="text-[11px] text-rose-400 mt-1 hidden"></p>
+      <!-- Saisie Pseudo (Max 20 car.) -->
+      <div class="text-left mb-3">
+        <div class="flex justify-between items-center mb-1">
+          <label for="input-pseudo" class="text-[10px] uppercase font-bold text-amber-400">Pseudo (Max 20 car.) :</label>
+          <span id="pseudo-counter" class="text-[10px] font-mono text-stone-400">0/20</span>
         </div>
-
-        <div class="flex gap-2 pt-1">
-          <button type="button" id="btn-cancel-modal" class="flex-1 py-2.5 rounded-xl bg-stone-800 text-stone-300 font-bold text-xs">
-            Annuler
-          </button>
-          <button type="submit" id="btn-confirm-save" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow">
-            Valider ✍️
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL : TOP 10 -->
-  <div id="modal-leaderboard" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="w-full max-w-sm bg-stone-900 border-2 border-amber-600/70 rounded-2xl p-5 shadow-2xl relative max-h-[85vh] flex flex-col">
-      <div class="flex justify-between items-center pb-2.5 border-b border-stone-800">
-        <div class="flex items-center gap-2">
-          <span class="text-2xl">🏆</span>
-          <h2 class="text-lg font-black font-serif-title text-amber-300">Top 10 - Taux d'Alcool</h2>
-        </div>
-        <button id="btn-close-leaderboard" class="text-stone-400 hover:text-white text-xl font-bold p-1">✕</button>
+        <input type="text" id="input-pseudo" maxlength="20" placeholder="Ex: Bob Le Soiffard" class="w-full px-3 py-2 rounded-lg bg-stone-950 border border-amber-700/60 focus:border-amber-400 focus:outline-none text-stone-100 text-xs font-semibold">
       </div>
 
-      <div id="leaderboard-list" class="flex-1 overflow-y-auto py-2.5 space-y-1.5 my-1 pr-1"></div>
-
-      <div class="pt-2 border-t border-stone-800 flex justify-between items-center gap-2">
-        <button id="btn-clear-scores" class="text-[11px] text-stone-500 hover:text-rose-400 underline cursor-pointer">
-          Vider
+      <!-- Actions -->
+      <div class="flex flex-col gap-2">
+        <button id="btn-save-score" type="button" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 text-stone-950 font-black text-xs uppercase tracking-wider shadow hover:from-amber-500 hover:to-orange-500 transition">
+          Enregistrer dans le Top 10
         </button>
-        <button id="btn-new-game" class="px-3 py-2 rounded-xl bg-amber-600 text-white font-bold text-xs shadow">
-          Nouveau Verre 🍻
+        <button id="btn-skip-save" type="button" class="w-full py-2 rounded-xl bg-stone-800 text-stone-300 font-bold text-xs hover:bg-stone-700 transition">
+          Rejouer sans enregistrer
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Notification Toast -->
-  <div id="toast" class="fixed top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-stone-950 font-bold px-4 py-2 rounded-xl shadow-2xl border border-amber-300 z-50 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-3 text-xs text-center">
-    Message
+  <!-- MODALE 2 : Affichage du Top 10 (Sans aucun bouton vider/supprimer) -->
+  <div id="modal-top10" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-stone-900 to-stone-950 border-2 border-amber-500/80 rounded-2xl w-full max-w-sm p-4 flex flex-col max-h-[85vh] shadow-2xl relative">
+      <div class="flex items-center justify-between pb-2 border-b border-amber-900/50">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xl">🏆</span>
+          <h2 class="text-sm font-black text-amber-300 uppercase tracking-wide">Top 10 - Les Plus Chargés</h2>
+        </div>
+        <button id="btn-close-top10" type="button" class="text-stone-400 hover:text-white text-lg font-bold px-1.5">✕</button>
+      </div>
+
+      <!-- Liste des 10 meilleurs scores -->
+      <div id="top10-list" class="flex-1 overflow-y-auto py-2 space-y-1.5 my-1 pr-0.5">
+        <!-- Rempli en JS -->
+      </div>
+
+      <div class="pt-2 border-t border-amber-900/50">
+        <button id="btn-top10-ok" type="button" class="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-stone-950 font-black text-xs uppercase tracking-wider transition">
+          Fermer
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
     /* ==========================================================================
-       DONNÉES DES 6 BOISSONS CLASSEES EN G/L CROISSANT
+       1. DONNÉES DES BOISSONS (Classées strictement en g/L croissant)
        ========================================================================== */
     const DRINKS = [
       {
-        id: 'beer',
+        id: 'biere',
         name: 'Bière Blonde',
         icon: '🍺',
-        alcohol: 0.20,
-        baseDuration: 1300,
-        desc: 'Fraîche et légère avec mousse généreuse (+0.20 g/L)',
-        colors: { stop1: '#f59e0b', stop2: '#fbbf24', stop3: '#d97706', glow: 'rgba(245, 158, 11, 0.45)' },
+        bacGain: 0.20,
+        colorStart: '#f59e0b',
+        colorEnd: '#d97706',
         hasFoam: true,
         hasIce: false
       },
       {
-        id: 'rose_wine',
+        id: 'rose',
         name: 'Vin Rosé',
         icon: '🌸',
-        alcohol: 0.25,
-        baseDuration: 1400,
-        desc: 'Frais, fruité et printanier (+0.25 g/L)',
-        colors: { stop1: '#fb7185', stop2: '#fecdd3', stop3: '#f43f5e', glow: 'rgba(251, 113, 133, 0.45)' },
+        bacGain: 0.25,
+        colorStart: '#fb7185',
+        colorEnd: '#e11d48',
         hasFoam: false,
         hasIce: false
       },
       {
-        id: 'white_wine',
+        id: 'blanc',
         name: 'Vin Blanc',
         icon: '🥂',
-        alcohol: 0.26,
-        baseDuration: 1450,
-        desc: 'Sec, vif et éclatant d\'or (+0.26 g/L)',
-        colors: { stop1: '#fef08a', stop2: '#fef9c3', stop3: '#eab308', glow: 'rgba(250, 204, 21, 0.4)' },
+        bacGain: 0.26,
+        colorStart: '#fef08a',
+        colorEnd: '#ca8a04',
         hasFoam: false,
         hasIce: false
       },
       {
-        id: 'red_wine',
+        id: 'rouge',
         name: 'Vin Rouge',
         icon: '🍷',
-        alcohol: 0.28,
-        baseDuration: 1550,
-        desc: 'Robe rubis profond et tanins ronds (+0.28 g/L)',
-        colors: { stop1: '#881337', stop2: '#9f1239', stop3: '#4c0519', glow: 'rgba(159, 18, 57, 0.5)' },
+        bacGain: 0.28,
+        colorStart: '#991b1b',
+        colorEnd: '#450a0a',
         hasFoam: false,
         hasIce: false
       },
       {
-        id: 'whisky_cola',
+        id: 'whisky',
         name: 'Whisky Coca',
         icon: '🥃',
-        alcohol: 0.35,
-        baseDuration: 1650,
-        desc: 'Ambré puissant et servi frais (+0.35 g/L)',
-        colors: { stop1: '#451a03', stop2: '#78350f', stop3: '#291004', glow: 'rgba(120, 53, 15, 0.5)' },
+        bacGain: 0.35,
+        colorStart: '#78350f',
+        colorEnd: '#291102',
         hasFoam: false,
         hasIce: true
       },
       {
-        id: 'vodka_redbull',
+        id: 'vodka',
         name: 'Vodka Redbull',
         icon: '⚡',
-        alcohol: 0.42,
-        baseDuration: 1750,
-        desc: 'Pétillant, caféiné et coup de fouet (+0.42 g/L)',
-        colors: { stop1: '#0284c7', stop2: '#38bdf8', stop3: '#0369a1', glow: 'rgba(2, 132, 199, 0.5)' },
+        bacGain: 0.42,
+        colorStart: '#06b6d4',
+        colorEnd: '#0284c7',
         hasFoam: false,
         hasIce: true
       }
     ];
 
-    /* ÉTAT DU JEU */
-    let currentDrinkIndex = 0;
-    let glassesDrunk = 0;
+    /* ==========================================================================
+       2. ÉTAT DU JEU
+       ========================================================================== */
+    let selectedDrinkIndex = 0;
     let bloodAlcohol = 0.00;
-    let drinkCounts = { beer: 0, rose_wine: 0, white_wine: 0, red_wine: 0, whisky_cola: 0, vodka_redbull: 0 };
+    let glassesDrunk = 0;
+    let currentDrinkRemaining = 100; // en %
 
+    // Minuteur 60 secondes
+    const TOTAL_TIME = 60;
+    let timeRemaining = TOTAL_TIME;
+    let timerRunning = false;
+    let timerInterval = null;
+
+    // Déglutition & Boucle d'action
     let isDrinking = false;
-    let drinkStartTime = 0;
-    let drinkProgress = 0.0;
-    let animationFrameId = null;
+    let drinkAnimFrame = null;
+    let lastTime = 0;
 
-    let releasesCountDuringGlass = 0;
-    let consecutiveChugStreak = 0;
-    let lastDrinkFinishTimestamp = 0;
-    let isStomachLocked = false;
-    let stomachCooldownTimer = null;
-    const NAUSEA_LOCKOUT_MS = 7000; // 7 secondes chrono
+    // Détection cul-sec et nausée (7s)
+    let consecCulSecCount = 0;
+    let startedThisGlassAt = null;
+    let pausedDuringThisGlass = false;
+    let lastGlassFinishedTime = 0;
+    let isNauseous = false;
+    let nauseaInterval = null;
+    let nauseaTimeLeft = 7.0;
 
-    /* MOTEUR AUDIO WEB AUDIO API */
-    class BarAudioEngine {
+    // Système de hoquet aléatoire (Hiccups)
+    let hiccupTimer = null;
+
+    /* ==========================================================================
+       3. MOTEUR AUDIO AVANCÉ (Web Audio API avec filtre passe-bas d'ivresse)
+       ========================================================================== */
+    class BarAudio {
       constructor() {
         this.ctx = null;
-        this.glugInterval = null;
+        this.gulpTimer = 0;
+        this.drunkenFilter = null;
       }
+
       init() {
         if (!this.ctx) {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          if (AudioCtx) this.ctx = new AudioCtx();
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+
+          // Filtre passe-bas pour étouffer le son plus on boit
+          this.drunkenFilter = this.ctx.createBiquadFilter();
+          this.drunkenFilter.type = 'lowpass';
+          this.drunkenFilter.frequency.setValueAtTime(12000, this.ctx.currentTime);
+          this.drunkenFilter.connect(this.ctx.destination);
         }
-        if (this.ctx && this.ctx.state === 'suspended') {
+        if (this.ctx.state === 'suspended') {
           this.ctx.resume();
         }
       }
-      startGlug(intervalMs) {
-        this.init();
-        if (!this.ctx) return;
-        this.stopGlug();
-        this.playSingleGlug();
-        this.glugInterval = setInterval(() => this.playSingleGlug(), Math.max(130, intervalMs));
+
+      updateFilter(bac) {
+        if (!this.drunkenFilter || !this.ctx) return;
+        // La fréquence de coupure descend de 12000Hz à 650Hz selon l'alcoolémie
+        const cutoff = Math.max(650, 12000 - (bac * 2900));
+        this.drunkenFilter.frequency.setTargetAtTime(cutoff, this.ctx.currentTime, 0.2);
       }
-      stopGlug() {
-        if (this.glugInterval) {
-          clearInterval(this.glugInterval);
-          this.glugInterval = null;
-        }
-      }
-      playSingleGlug() {
+
+      playGulp(speedRatio, bac) {
         if (!this.ctx) return;
         try {
+          const now = this.ctx.currentTime;
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
-          const now = this.ctx.currentTime;
-          const pitchFactor = Math.max(0.65, 1.0 - (bloodAlcohol * 0.08));
-          const freq = (210 + Math.random() * 50) * pitchFactor;
 
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now);
-          osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.1);
+          // La tonalité devient plus lourde et grave avec l'alcool
+          const pitchDrop = Math.max(0.55, 1 - (bac * 0.12));
+          const baseFreq = (165 + Math.random() * 35) * pitchDrop;
 
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.frequency.setValueAtTime(baseFreq, now);
+          osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.45, now + 0.13);
 
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.13);
-        } catch(e) {}
-      }
-      playCheer() {
-        this.init();
-        if (!this.ctx) return;
-        try {
-          const now = this.ctx.currentTime;
-          [1760, 2637].forEach((freq, idx) => {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.05);
-            gain.gain.setValueAtTime(0.18, now + idx * 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(now + idx * 0.05);
-            osc.stop(now + 0.6);
-          });
-        } catch(e) {}
-      }
-      playNauseaSound() {
-        this.init();
-        if (!this.ctx) return;
-        try {
-          const now = this.ctx.currentTime;
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(130, now);
-          osc.frequency.linearRampToValueAtTime(75, now + 0.25);
-          osc.frequency.linearRampToValueAtTime(95, now + 0.5);
           gain.gain.setValueAtTime(0.22, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
           osc.connect(gain);
-          gain.connect(this.ctx.destination);
+          gain.connect(this.drunkenFilter || this.ctx.destination);
+
           osc.start(now);
-          osc.stop(now + 0.6);
-        } catch(e) {}
+          osc.stop(now + 0.15);
+        } catch (e) {}
       }
-      playClick() {
-        this.init();
+
+      playHiccup() {
         if (!this.ctx) return;
         try {
           const now = this.ctx.currentTime;
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
+
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(450, now);
-          osc.frequency.exponentialRampToValueAtTime(180, now + 0.04);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.frequency.setValueAtTime(260, now);
+          osc.frequency.exponentialRampToValueAtTime(620, now + 0.08);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.16);
+
+          gain.gain.setValueAtTime(0.35, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+
           osc.start(now);
-          osc.stop(now + 0.05);
-        } catch(e) {}
+          osc.stop(now + 0.18);
+        } catch (e) {}
+      }
+
+      playEmptyClink() {
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1400, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.35);
+
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+          osc.connect(gain);
+          gain.connect(this.drunkenFilter || this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.36);
+        } catch (e) {}
+      }
+
+      playNauseaBurp() {
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(95, now);
+          osc.frequency.linearRampToValueAtTime(45, now + 0.45);
+
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.52);
+        } catch (e) {}
+      }
+
+      playBell() {
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, now);
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.82);
+        } catch (e) {}
       }
     }
-    const audio = new BarAudioEngine();
 
-    /* DOM */
+    const sound = new BarAudio();
+
+    /* ==========================================================================
+       4. ÉLÉMENTS DU DOM
+       ========================================================================== */
     const dom = {
-      viewport: document.getElementById('game-viewport'),
-      glassesCount: document.getElementById('glasses-count'),
-      bacCount: document.getElementById('bac-count'),
-      speedIndicator: document.getElementById('speed-indicator'),
-      drinkSelectorGrid: document.getElementById('drink-selector-grid'),
-      liquidBody: document.getElementById('liquid-body'),
-      liquidWavePath: document.getElementById('liquid-wave-path'),
-      beerFoam: document.getElementById('beer-foam'),
-      iceCubes: document.getElementById('ice-cubes'),
-      drinkPercentText: document.getElementById('drink-percent-text'),
-      drinkGlow: document.getElementById('drink-glow'),
-      currentDrinkName: document.getElementById('current-drink-name'),
-      currentDrinkDesc: document.getElementById('current-drink-desc'),
+      mainContent: document.getElementById('main-content'),
+      doubleVision: document.getElementById('double-vision-layer'),
+      tunnelVignette: document.getElementById('tunnel-vignette'),
+      timerBox: document.getElementById('timer-box'),
+      displayTimer: document.getElementById('display-timer'),
+      displayGlasses: document.getElementById('display-glasses'),
+      displayBac: document.getElementById('display-bac'),
+      displaySpeed: document.getElementById('display-speed'),
+      drinkCards: document.querySelectorAll('.drink-card'),
+      liquidRect: document.getElementById('liquid-rect'),
+      foamGroup: document.getElementById('foam-group'),
+      iceGroup: document.getElementById('ice-group'),
       gradStop1: document.getElementById('grad-stop-1'),
       gradStop2: document.getElementById('grad-stop-2'),
-      gradStop3: document.getElementById('grad-stop-3'),
+      displayPercent: document.getElementById('display-percent'),
+      currentDrinkName: document.getElementById('current-drink-name'),
+      currentDrinkSub: document.getElementById('current-drink-sub'),
+      nauseaPanel: document.getElementById('nausea-panel'),
+      nauseaProgress: document.getElementById('nausea-progress'),
+      nauseaCountdown: document.getElementById('nausea-countdown'),
+      btnDrinkWrapper: document.getElementById('btn-drink-wrapper'),
       btnDrink: document.getElementById('btn-drink'),
-      drinkTextBtn: document.getElementById('drink-text-btn'),
-      drinkIconBtn: document.getElementById('drink-icon-btn'),
+      btnDrinkIcon: document.getElementById('btn-drink-icon'),
+      btnDrinkText: document.getElementById('btn-drink-text'),
+      btnRestart: document.getElementById('btn-restart'),
       btnTop10: document.getElementById('btn-top10'),
+      // Modal Game Over
+      modalGameOver: document.getElementById('modal-gameover'),
+      finalBac: document.getElementById('final-bac'),
+      finalGlasses: document.getElementById('final-glasses'),
+      inputPseudo: document.getElementById('input-pseudo'),
+      pseudoCounter: document.getElementById('pseudo-counter'),
       btnSaveScore: document.getElementById('btn-save-score'),
-      nauseaAlert: document.getElementById('nausea-alert'),
-      cooldownBar: document.getElementById('cooldown-bar'),
-      cooldownTimerText: document.getElementById('cooldown-timer-text'),
-      modalSave: document.getElementById('modal-save'),
-      formSaveScore: document.getElementById('form-save-score'),
-      playerNickname: document.getElementById('player-nickname'),
-      charCounter: document.getElementById('char-counter'),
-      btnCancelModal: document.getElementById('btn-cancel-modal'),
-      modalSummaryGlasses: document.getElementById('modal-summary-glasses'),
-      modalSummaryBac: document.getElementById('modal-summary-bac'),
-      modalSummaryFav: document.getElementById('modal-summary-fav'),
-      modalLeaderboard: document.getElementById('modal-leaderboard'),
-      leaderboardList: document.getElementById('leaderboard-list'),
-      btnCloseLeaderboard: document.getElementById('btn-close-leaderboard'),
-      btnNewGame: document.getElementById('btn-new-game'),
-      btnClearScores: document.getElementById('btn-clear-scores'),
-      toast: document.getElementById('toast'),
-      errorMessage: document.getElementById('error-message')
+      btnSkipSave: document.getElementById('btn-skip-save'),
+      // Modal Top 10
+      modalTop10: document.getElementById('modal-top10'),
+      top10List: document.getElementById('top10-list'),
+      btnCloseTop10: document.getElementById('btn-close-top10'),
+      btnTop10Ok: document.getElementById('btn-top10-ok')
     };
 
-    /* RENDU DE LA CARTE DES BOISSONS (IDENTIQUE AU VISUEL DE RÉFÉRENCE) */
-    function renderDrinkSelector() {
-      dom.drinkSelectorGrid.innerHTML = '';
-      DRINKS.forEach((drink, idx) => {
-        const isSelected = idx === currentDrinkIndex;
-        const card = document.createElement('div');
-        card.className = `drink-card ${isSelected ? 'active' : ''}`;
-        card.innerHTML = `
-          <div class="flex items-center justify-between w-full">
-            <span class="text-base">${drink.icon}</span>
-            <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-[#3d0814] text-rose-300 border border-rose-500/40">
-              +${drink.alcohol.toFixed(2)}
-            </span>
-          </div>
-          <div class="mt-0.5 leading-tight">
-            <div class="text-[11px] font-bold text-white truncate">${drink.name}</div>
-            <div class="text-[9px] text-amber-200/40">#${idx + 1}</div>
-          </div>
-        `;
+    /* ==========================================================================
+       5. GESTION DES BOISSONS & DU VERRE
+       ========================================================================== */
+    function updateDrinkUI() {
+      const drink = DRINKS[selectedDrinkIndex];
 
-        card.addEventListener('click', () => {
-          if (isDrinking || isStomachLocked) return;
-          audio.playClick();
-          selectDrink(idx);
-        });
-
-        dom.drinkSelectorGrid.appendChild(card);
+      dom.drinkCards.forEach((card, idx) => {
+        if (idx === selectedDrinkIndex) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
       });
+
+      dom.currentDrinkName.textContent = drink.name;
+      dom.currentDrinkSub.textContent = `+${drink.bacGain.toFixed(2)} g/L par verre`;
+      dom.btnDrinkIcon.textContent = drink.icon;
+
+      dom.gradStop1.setAttribute('stop-color', drink.colorStart);
+      dom.gradStop2.setAttribute('stop-color', drink.colorEnd);
+
+      dom.foamGroup.style.display = drink.hasFoam ? 'inline' : 'none';
+      dom.iceGroup.style.display = drink.hasIce ? 'inline' : 'none';
+
+      renderGlassLevel();
     }
 
-    function selectDrink(idx) {
-      currentDrinkIndex = idx;
-      renderDrinkSelector();
-      updateGlassVisuals();
-      resetGlassFill();
-    }
+    function renderGlassLevel() {
+      const maxH = 252;
+      const ratio = Math.max(0, Math.min(1, currentDrinkRemaining / 100));
+      const liquidH = maxH * ratio;
+      const liquidY = 272 - liquidH;
 
-    function updateGlassVisuals() {
-      const drink = DRINKS[currentDrinkIndex];
-      dom.gradStop1.setAttribute('stop-color', drink.colors.stop1);
-      dom.gradStop2.setAttribute('stop-color', drink.colors.stop2);
-      dom.gradStop3.setAttribute('stop-color', drink.colors.stop3);
+      dom.liquidRect.setAttribute('y', liquidY);
+      dom.liquidRect.setAttribute('height', liquidH);
 
-      dom.drinkGlow.style.backgroundColor = drink.colors.glow;
-      dom.currentDrinkName.innerText = drink.name;
-      dom.currentDrinkDesc.innerText = drink.desc;
-      dom.drinkIconBtn.innerText = drink.icon;
-
-      dom.beerFoam.style.opacity = drink.hasFoam ? '1' : '0';
-      dom.iceCubes.setAttribute('opacity', drink.hasIce ? '1' : '0');
-    }
-
-    function resetGlassFill() {
-      drinkProgress = 0.0;
-      releasesCountDuringGlass = 0;
-      updateGlassHeight(0.0);
-      dom.drinkPercentText.innerText = '100%';
-    }
-
-    function updateGlassHeight(progress) {
-      const topY = 24;
-      const bottomY = 165;
-      const totalH = bottomY - topY;
-
-      const currentY = topY + (totalH * progress);
-      const remainingHeight = Math.max(0, bottomY - currentY);
-
-      dom.liquidBody.setAttribute('y', currentY);
-      dom.liquidBody.setAttribute('height', remainingHeight);
-
-      dom.liquidWavePath.setAttribute('transform', `translate(0, ${currentY - 4})`);
-      dom.beerFoam.setAttribute('transform', `translate(0, ${currentY - 24})`);
-
-      if (progress > 0.85) {
-        dom.beerFoam.style.opacity = '0';
-      } else if (DRINKS[currentDrinkIndex].hasFoam) {
-        dom.beerFoam.style.opacity = '1';
-      }
-    }
-
-    /* VITESSE SELON LE TAUX D'ALCOOL */
-    function getCurrentDrinkDuration() {
-      const drink = DRINKS[currentDrinkIndex];
-      const slowdownMultiplier = 1.0 + (bloodAlcohol * 0.65);
-      return drink.baseDuration * slowdownMultiplier;
-    }
-
-    function updateSpeedIndicator() {
-      const duration = getCurrentDrinkDuration();
-      const base = DRINKS[currentDrinkIndex].baseDuration;
-      const ratio = Math.round((base / duration) * 100);
-
-      let label = '(Rapide)';
-      if (ratio < 40) label = '(Pâteux)';
-      else if (ratio < 70) label = '(Ralenti)';
-
-      dom.speedIndicator.innerHTML = `${ratio}% <span class="text-[9px] block text-amber-400/90 font-medium">${label}</span>`;
-    }
-
-    /* MÉCANIQUE DU CLIC/TOUCH MAINTENU POUR BOIRE */
-    function startDrinking(e) {
-      if (e && e.cancelable) e.preventDefault();
-
-      if (isStomachLocked) {
-        showToast('Estomac en surchauffe ! Pause de 7 secondes obligatoire... 🤢');
-        return;
-      }
-      if (isDrinking) return;
-
-      audio.init();
-      isDrinking = true;
-      drinkStartTime = performance.now();
-      dom.btnDrink.classList.add('drinking-active');
-      dom.drinkTextBtn.innerText = 'DÉGLUTITION...';
-
-      const currentDuration = getCurrentDrinkDuration();
-      const glugStep = Math.min(300, 140 * (currentDuration / DRINKS[currentDrinkIndex].baseDuration));
-      audio.startGlug(glugStep);
-
-      const initialProgress = drinkProgress;
-
-      function loop(now) {
-        if (!isDrinking) return;
-        const elapsed = now - drinkStartTime;
-        const addedProgress = elapsed / currentDuration;
-        drinkProgress = Math.min(1.0, initialProgress + addedProgress);
-
-        updateGlassHeight(drinkProgress);
-        const percentLeft = Math.round((1 - drinkProgress) * 100);
-        dom.drinkPercentText.innerText = `${percentLeft}%`;
-
-        if (drinkProgress >= 1.0) {
-          finishDrink();
-          return;
-        }
-        animationFrameId = requestAnimationFrame(loop);
-      }
-      animationFrameId = requestAnimationFrame(loop);
-    }
-
-    function stopDrinking(e) {
-      if (e && e.cancelable) e.preventDefault();
-      if (!isDrinking) return;
-
-      isDrinking = false;
-      dom.btnDrink.classList.remove('drinking-active');
-      dom.drinkTextBtn.innerText = 'MAINTENIR POUR BOIRE';
-      audio.stopGlug();
-
-      if (drinkProgress < 1.0) {
-        releasesCountDuringGlass++;
+      if (DRINKS[selectedDrinkIndex].hasFoam) {
+        dom.foamGroup.setAttribute('transform', `translate(0, ${liquidY - 30})`);
       }
 
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
+      dom.displayPercent.textContent = `${Math.round(currentDrinkRemaining)}%`;
     }
 
-    function finishDrink() {
-      stopDrinking();
+    /* ==========================================================================
+       6. VITESSE DE DÉGLUTITION DÉGRESSIVE
+       ========================================================================== */
+    function getSwallowingSpeedRatio() {
+      const factor = 1 / (1 + (bloodAlcohol * 0.75));
+      return Math.max(0.18, factor);
+    }
 
-      const now = performance.now();
-      const timeSinceLastDrink = now - lastDrinkFinishTimestamp;
-      lastDrinkFinishTimestamp = now;
+    function updateDashboard() {
+      dom.displayGlasses.textContent = glassesDrunk;
+      dom.displayBac.textContent = bloodAlcohol.toFixed(2);
 
-      // Cul sec = bu sans relâcher ou enchaîné très vite
-      const isCulSec = (releasesCountDuringGlass === 0) || (timeSinceLastDrink < 4000);
-      if (isCulSec) {
-        consecutiveChugStreak++;
-      } else {
-        consecutiveChugStreak = 1;
-      }
+      const ratio = getSwallowingSpeedRatio();
+      const percent = Math.round(ratio * 100);
+      dom.displaySpeed.textContent = `${percent}%`;
 
-      const drink = DRINKS[currentDrinkIndex];
-      glassesDrunk++;
-      drinkCounts[drink.id]++;
-      bloodAlcohol = parseFloat((bloodAlcohol + drink.alcohol).toFixed(2));
-
-      dom.glassesCount.innerText = glassesDrunk;
-      dom.bacCount.innerHTML = `${bloodAlcohol.toFixed(2)} <span class="text-[10px] text-rose-300">g/L</span>`;
-      updateSpeedIndicator();
-
-      audio.playCheer();
+      sound.updateFilter(bloodAlcohol);
       applyDrunkenEffects();
+      updateDrinkButtonSize();
+    }
 
-      if (consecutiveChugStreak >= 2) {
-        showToast('Trop de cul-secs d\'affilée ! Refus de boire de 7 secondes ! 🤢');
-        triggerNauseaLockout();
+    /* ==========================================================================
+       7. NOUVELLE MÉCANIQUE : LE BOUTON BOIRE RÉTRÉCIT & OSCILLE
+       ========================================================================== */
+    function updateDrinkButtonSize() {
+      // Échelle décroissante de 1.0 (à 0 g/L) jusqu'à ~0.50 (à 3.5+ g/L)
+      const scale = Math.max(0.50, 1 - (bloodAlcohol * 0.15));
+      // Largeur du conteneur qui rétrécit (de 100% à 58%)
+      const widthPct = Math.max(58, 100 - (bloodAlcohol * 12));
+
+      dom.btnDrinkWrapper.style.width = `${widthPct}%`;
+
+      // Padding intérieur dynamique
+      const py = Math.max(8, 14 - (bloodAlcohol * 1.8));
+      const px = Math.max(10, 16 - (bloodAlcohol * 2));
+      const fontSize = Math.max(10, 14 - (bloodAlcohol * 1.1));
+
+      dom.btnDrink.style.paddingTop = `${py}px`;
+      dom.btnDrink.style.paddingBottom = `${py}px`;
+      dom.btnDrink.style.paddingLeft = `${px}px`;
+      dom.btnDrink.style.paddingRight = `${px}px`;
+      dom.btnDrink.style.fontSize = `${fontSize}px`;
+      dom.btnDrink.style.transform = `scale(${scale})`;
+
+      // Ataxie motrice : le bouton bouge légèrement tout seul quand le taux est élevé
+      if (bloodAlcohol >= 0.8) {
+        const wobbleX = Math.min(18, (bloodAlcohol - 0.7) * 7);
+        const wobbleY = Math.min(10, (bloodAlcohol - 0.7) * 4);
+        const wobbleR = Math.min(4.5, (bloodAlcohol - 0.7) * 2);
+        const wobbleDur = Math.max(1.2, 3 - (bloodAlcohol * 0.4));
+
+        dom.btnDrinkWrapper.style.setProperty('--btn-wobble-x', `${wobbleX}px`);
+        dom.btnDrinkWrapper.style.setProperty('--btn-wobble-y', `${wobbleY}px`);
+        dom.btnDrinkWrapper.style.setProperty('--btn-wobble-r', `${wobbleR}deg`);
+        dom.btnDrinkWrapper.style.setProperty('--btn-wobble-dur', `${wobbleDur}s`);
+        dom.btnDrinkWrapper.classList.add('is-button-wobbling');
       } else {
-        showToast(`+1 ${drink.name} bu ! (+${drink.alcohol.toFixed(2)} g/L)`);
-        setTimeout(() => resetGlassFill(), 300);
+        dom.btnDrinkWrapper.classList.remove('is-button-wobbling');
+        dom.btnDrinkWrapper.style.removeProperty('--btn-wobble-x');
+        dom.btnDrinkWrapper.style.removeProperty('--btn-wobble-y');
+        dom.btnDrinkWrapper.style.removeProperty('--btn-wobble-r');
+      }
+
+      updateButtonLabel();
+    }
+
+    function updateButtonLabel() {
+      if (isDrinking) {
+        if (bloodAlcohol >= 2.5) {
+          dom.btnDrinkText.textContent = "GLOUUUU... *HIC*";
+        } else if (bloodAlcohol >= 1.5) {
+          dom.btnDrinkText.textContent = "Glouuu... glou...";
+        } else {
+          dom.btnDrinkText.textContent = "Glou-glou en cours...";
+        }
+      } else {
+        if (bloodAlcohol >= 2.8) {
+          dom.btnDrinkText.textContent = "MAINT'NIRR P'R BOIRE";
+        } else if (bloodAlcohol >= 1.8) {
+          dom.btnDrinkText.textContent = "Maintenirrr pour Boire";
+        } else {
+          dom.btnDrinkText.textContent = "Maintenir pour Boire";
+        }
       }
     }
 
-    function triggerNauseaLockout() {
-      isStomachLocked = true;
-      consecutiveChugStreak = 0;
-      releasesCountDuringGlass = 0;
-      audio.playNauseaSound();
-
-      dom.btnDrink.disabled = true;
-      dom.btnDrink.classList.remove('btn-drink-pulse');
-      dom.btnDrink.classList.add('opacity-40', 'cursor-not-allowed');
-      dom.drinkTextBtn.innerText = 'ESTOMAC PLEIN...';
-
-      dom.nauseaAlert.classList.remove('hidden');
-
-      const lockoutTotalMs = NAUSEA_LOCKOUT_MS;
-      const lockoutStart = performance.now();
-
-      if (stomachCooldownTimer) clearInterval(stomachCooldownTimer);
-
-      stomachCooldownTimer = setInterval(() => {
-        const elapsed = performance.now() - lockoutStart;
-        const remainingMs = Math.max(0, lockoutTotalMs - elapsed);
-        const percent = (remainingMs / lockoutTotalMs) * 100;
-
-        dom.cooldownBar.style.width = `${percent}%`;
-        dom.cooldownTimerText.innerText = `Pause : ${(remainingMs / 1000).toFixed(1)}s`;
-
-        if (remainingMs <= 0) {
-          clearInterval(stomachCooldownTimer);
-          isStomachLocked = false;
-          dom.nauseaAlert.classList.add('hidden');
-
-          dom.btnDrink.disabled = false;
-          dom.btnDrink.classList.add('btn-drink-pulse');
-          dom.btnDrink.classList.remove('opacity-40', 'cursor-not-allowed');
-          dom.drinkTextBtn.innerText = 'MAINTENIR POUR BOIRE';
-
-          showToast('Estomac reposé, vous pouvez reboire ! 🍻');
-          resetGlassFill();
-        }
-      }, 50);
-    }
-
-    /* EFFETS VISUELS D'ÉBRIÉTÉ */
+    /* ==========================================================================
+       8. NOUVEAUX EFFETS D'ÉBRIÉTÉ POUSSÉS (DIPLOPIE, VIGNETTE, ATOMISATION, HICCUPS)
+       ========================================================================== */
     function applyDrunkenEffects() {
       if (bloodAlcohol === 0) {
-        dom.viewport.style.filter = 'none';
-        dom.viewport.classList.remove('is-drunken');
+        dom.mainContent.style.filter = 'none';
+        dom.mainContent.classList.remove('is-drunken-sway');
+        dom.doubleVision.style.opacity = '0';
+        dom.doubleVision.innerHTML = '';
+        dom.tunnelVignette.style.opacity = '0';
+        dom.tunnelVignette.classList.remove('vignette-pulsing');
         return;
       }
-      const blurAmount = Math.min(3.8, bloodAlcohol * 0.85);
-      const saturateAmount = Math.min(170, 100 + (bloodAlcohol * 18));
-      const swayDeg = Math.min(5.0, 0.7 + (bloodAlcohol * 1.0));
-      const swayPx = Math.min(14, 2 + (bloodAlcohol * 2.5));
-      const swaySpeed = Math.max(2.2, 5.0 - (bloodAlcohol * 0.5));
 
-      dom.viewport.style.setProperty('--sway-deg', `${swayDeg}deg`);
-      dom.viewport.style.setProperty('--sway-px', `${swayPx}px`);
-      dom.viewport.style.setProperty('--sway-speed', `${swaySpeed}s`);
+      // 1. Flou et Aberration Chromatique RGB
+      const blurPx = Math.min(4.2, bloodAlcohol * 0.95);
+      const swayDeg = Math.min(5.2, 0.8 + bloodAlcohol * 1.3);
+      const swayPx = Math.min(15, 2.5 + bloodAlcohol * 3.5);
+      const swaySpeed = Math.max(1.5, 4.2 - (bloodAlcohol * 0.6));
 
-      dom.viewport.style.filter = `blur(${blurAmount}px) saturate(${saturateAmount}%)`;
-      dom.viewport.classList.add('is-drunken');
+      dom.mainContent.style.setProperty('--sway-deg', `${swayDeg}deg`);
+      dom.mainContent.style.setProperty('--sway-px', `${swayPx}px`);
+      dom.mainContent.style.setProperty('--sway-speed', `${swaySpeed}s`);
+
+      // Séparation des couches rouge / cyan + saturation psychédélique
+      const shift = Math.min(18, bloodAlcohol * 4.2);
+      const sat = Math.min(180, 100 + (bloodAlcohol * 25));
+      const hue = Math.sin(bloodAlcohol * 1.8) * Math.min(22, bloodAlcohol * 7);
+
+      const chromatic = `drop-shadow(${shift}px 0 1px rgba(244,63,94,0.45)) drop-shadow(-${shift}px 0 1px rgba(6,182,212,0.45))`;
+      dom.mainContent.style.filter = `blur(${blurPx}px) saturate(${sat}%) hue-rotate(${hue}deg) ${chromatic}`;
+      dom.mainContent.classList.add('is-drunken-sway');
+
+      // 2. Vision Double Asynchrone (Diplopie)
+      const dipX = Math.min(26, 4 + bloodAlcohol * 6.5);
+      const dipY = Math.min(16, 2 + bloodAlcohol * 3.8);
+      const dipRot = Math.min(3.5, bloodAlcohol * 1.1);
+      const dipOpacity = Math.min(0.55, 0.15 + bloodAlcohol * 0.12);
+
+      document.documentElement.style.setProperty('--dip-x', `${dipX}px`);
+      document.documentElement.style.setProperty('--dip-y', `${dipY}px`);
+      document.documentElement.style.setProperty('--dip-rot', `${dipRot}deg`);
+
+      dom.doubleVision.style.opacity = dipOpacity.toString();
+
+      const centerTarget = document.getElementById('glass-center-area');
+      if (centerTarget && dom.doubleVision.innerHTML === '') {
+        dom.doubleVision.innerHTML = `
+          <div class="w-full h-full max-w-md mx-auto flex flex-col justify-center items-center pointer-events-none filter saturate-200 hue-rotate-30">
+            ${centerTarget.innerHTML}
+          </div>
+        `;
+      }
+
+      // 3. Vision Tunnel / Vignette Sombre Pulsante
+      if (bloodAlcohol >= 1.0) {
+        const darkness = Math.min(0.92, 0.55 + ((bloodAlcohol - 1.0) * 0.12));
+        const baseOp = Math.min(0.85, 0.35 + ((bloodAlcohol - 1.0) * 0.15));
+        dom.tunnelVignette.style.setProperty('--vignette-darkness', darkness);
+        dom.tunnelVignette.style.setProperty('--vignette-base-op', baseOp);
+        dom.tunnelVignette.style.opacity = baseOp.toString();
+        dom.tunnelVignette.classList.add('vignette-pulsing');
+      } else {
+        dom.tunnelVignette.style.opacity = '0';
+        dom.tunnelVignette.classList.remove('vignette-pulsing');
+      }
     }
 
-    /* GESTION DES SCORES LOCALSTORAGE */
-    const STORAGE_KEY = 'bar_game_bac_top10_v3';
+    /* Système de Hoquet Aléatoire (Hiccups) au-delà de 1.4 g/L */
+    function scheduleHiccup() {
+      if (hiccupTimer) clearTimeout(hiccupTimer);
+      if (bloodAlcohol < 1.4 || timeRemaining <= 0) return;
 
-    function getScores() {
+      // Délai aléatoire entre 5s et 12s
+      const delay = 5000 + Math.random() * 7000;
+      hiccupTimer = setTimeout(() => {
+        if (bloodAlcohol >= 1.4 && timeRemaining > 0 && !isNauseous) {
+          triggerHiccup();
+        }
+        scheduleHiccup();
+      }, delay);
+    }
+
+    function triggerHiccup() {
+      sound.playHiccup();
+      dom.mainContent.classList.add('hiccup-active');
+
+      // Interruption fugace si on buvait au moment du hoquet
+      if (isDrinking) {
+        const prevText = dom.btnDrinkText.textContent;
+        dom.btnDrinkText.textContent = "*HIC !*";
+        setTimeout(() => {
+          updateButtonLabel();
+        }, 600);
+      }
+
+      setTimeout(() => {
+        dom.mainContent.classList.remove('hiccup-active');
+      }, 300);
+    }
+
+    /* ==========================================================================
+       9. GESTION DU MINUTEUR DE 60 SECONDES
+       ========================================================================== */
+    function startTimerIfNeeded() {
+      if (timerRunning || timeRemaining <= 0) return;
+      timerRunning = true;
+
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+
+        const mins = Math.floor(timeRemaining / 60);
+        const secs = timeRemaining % 60;
+        dom.displayTimer.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        if (timeRemaining <= 10) {
+          dom.timerBox.classList.add('border-rose-500', 'bg-rose-950/70', 'animate-pulse');
+          dom.displayTimer.classList.add('text-rose-400');
+        }
+
+        if (timeRemaining <= 0) {
+          endGame();
+        }
+      }, 1000);
+
+      scheduleHiccup();
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      if (hiccupTimer) {
+        clearTimeout(hiccupTimer);
+        hiccupTimer = null;
+      }
+      timerRunning = false;
+    }
+
+    function endGame() {
+      stopTimer();
+      stopDrinkingAction();
+      sound.playBell();
+
+      dom.finalBac.textContent = `${bloodAlcohol.toFixed(2)} g/L`;
+      dom.finalGlasses.textContent = glassesDrunk;
+      dom.inputPseudo.value = '';
+      dom.pseudoCounter.textContent = '0/20';
+
+      dom.modalGameOver.classList.remove('hidden');
+    }
+
+    /* ==========================================================================
+       10. ACTION DE BOIRE & REFUS PAR NAUSÉE (7 SECONDES)
+       ========================================================================== */
+    function triggerNauseaLockout() {
+      isNauseous = true;
+      stopDrinkingAction();
+      sound.playNauseaBurp();
+
+      nauseaTimeLeft = 7.0;
+      dom.nauseaPanel.classList.remove('hidden');
+      dom.nauseaCountdown.textContent = `${nauseaTimeLeft.toFixed(1)}s`;
+      dom.nauseaProgress.style.width = '100%';
+
+      const stepMs = 100;
+      const totalSteps = 7000 / stepMs;
+      let currentStep = 0;
+
+      if (nauseaInterval) clearInterval(nauseaInterval);
+      nauseaInterval = setInterval(() => {
+        currentStep++;
+        nauseaTimeLeft = Math.max(0, 7.0 - (currentStep * stepMs / 1000));
+        dom.nauseaCountdown.textContent = `${nauseaTimeLeft.toFixed(1)}s`;
+        const pct = Math.max(0, 100 - ((currentStep / totalSteps) * 100));
+        dom.nauseaProgress.style.width = `${pct}%`;
+
+        if (nauseaTimeLeft <= 0) {
+          clearInterval(nauseaInterval);
+          nauseaInterval = null;
+          isNauseous = false;
+          dom.nauseaPanel.classList.add('hidden');
+          consecCulSecCount = 0;
+        }
+      }, stepMs);
+    }
+
+    function startDrinkingAction(e) {
+      if (e) {
+        e.preventDefault();
+      }
+      if (isNauseous || timeRemaining <= 0) return;
+
+      sound.init();
+      startTimerIfNeeded();
+
+      if (!isDrinking) {
+        isDrinking = true;
+        lastTime = performance.now();
+        dom.btnDrink.classList.add('is-drinking');
+        updateButtonLabel();
+
+        if (startedThisGlassAt === null) {
+          startedThisGlassAt = performance.now();
+          pausedDuringThisGlass = false;
+        }
+
+        drinkAnimFrame = requestAnimationFrame(drinkingLoop);
+      }
+    }
+
+    function stopDrinkingAction() {
+      if (isDrinking) {
+        isDrinking = false;
+        pausedDuringThisGlass = true;
+        dom.btnDrink.classList.remove('is-drinking');
+        updateButtonLabel();
+
+        if (drinkAnimFrame) {
+          cancelAnimationFrame(drinkAnimFrame);
+          drinkAnimFrame = null;
+        }
+      }
+    }
+
+    function drinkingLoop(timestamp) {
+      if (!isDrinking || timeRemaining <= 0) return;
+
+      const dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      const speedRatio = getSwallowingSpeedRatio();
+      const drainSpeed = 46 * speedRatio;
+
+      currentDrinkRemaining -= drainSpeed * dt;
+
+      sound.gulpTimer += dt;
+      if (sound.gulpTimer >= (0.28 / speedRatio)) {
+        sound.playGulp(speedRatio, bloodAlcohol);
+        sound.gulpTimer = 0;
+      }
+
+      if (currentDrinkRemaining <= 0) {
+        currentDrinkRemaining = 0;
+        renderGlassLevel();
+        glassFinished();
+        return;
+      }
+
+      renderGlassLevel();
+      drinkAnimFrame = requestAnimationFrame(drinkingLoop);
+    }
+
+    function glassFinished() {
+      stopDrinkingAction();
+      sound.playEmptyClink();
+
+      const drink = DRINKS[selectedDrinkIndex];
+      glassesDrunk++;
+      bloodAlcohol = parseFloat((bloodAlcohol + drink.bacGain).toFixed(2));
+      updateDashboard();
+
+      const now = performance.now();
+      const isCulSec = (!pausedDuringThisGlass) || ((now - lastGlassFinishedTime) < 3000);
+      lastGlassFinishedTime = now;
+
+      if (isCulSec) {
+        consecCulSecCount++;
+      } else {
+        consecCulSecCount = 1;
+      }
+
+      if (consecCulSecCount >= 2) {
+        triggerNauseaLockout();
+      }
+
+      scheduleHiccup();
+
+      setTimeout(() => {
+        currentDrinkRemaining = 100;
+        startedThisGlassAt = null;
+        pausedDuringThisGlass = false;
+        renderGlassLevel();
+      }, 250);
+    }
+
+    /* ==========================================================================
+       11. CLASSEMENT TOP 10 (LOCALSTORAGE PERSISTANT SANS BOUTON SUPPRIMER)
+       ========================================================================== */
+    const STORAGE_KEY = 'bar_challenge_top10_v2';
+
+    function getTop10() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         return raw ? JSON.parse(raw) : [];
@@ -943,230 +1187,194 @@
       }
     }
 
-    function saveScoreEntry(entry) {
-      try {
-        const scores = getScores();
-        scores.push(entry);
-        scores.sort((a, b) => b.bac - a.bac || b.glasses - a.glasses);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(scores.slice(0, 30)));
-      } catch(e) {}
-    }
-
-    function getFavoriteDrinkName() {
-      let maxCount = -1;
-      let fav = DRINKS[0].name;
-      DRINKS.forEach(d => {
-        if (drinkCounts[d.id] > maxCount) {
-          maxCount = drinkCounts[d.id];
-          fav = d.name;
-        }
-      });
-      return maxCount > 0 ? fav : DRINKS[currentDrinkIndex].name;
-    }
-
-    function openSaveModal() {
-      audio.playClick();
-      dom.modalSummaryGlasses.innerText = glassesDrunk;
-      dom.modalSummaryBac.innerText = `${bloodAlcohol.toFixed(2)} g/L`;
-      dom.modalSummaryFav.innerText = getFavoriteDrinkName();
-
-      dom.playerNickname.value = '';
-      dom.charCounter.innerText = '0 / 20';
-      dom.errorMessage.classList.add('hidden');
-      dom.modalSave.classList.remove('hidden');
-
-      setTimeout(() => dom.playerNickname.focus(), 150);
-    }
-
-    function closeSaveModal() {
-      audio.playClick();
-      dom.modalSave.classList.add('hidden');
-    }
-
-    function handleFormSubmit() {
-      const pseudo = dom.playerNickname.value.trim();
-      if (!pseudo) {
-        dom.errorMessage.innerText = 'Veuillez saisir votre pseudo.';
-        dom.errorMessage.classList.remove('hidden');
-        return;
-      }
-      if (pseudo.length > 20) {
-        dom.errorMessage.innerText = '20 caractères maximum.';
-        dom.errorMessage.classList.remove('hidden');
-        return;
-      }
-
-      const scoreEntry = {
-        name: pseudo.slice(0, 20),
-        bac: parseFloat(bloodAlcohol.toFixed(2)),
+    function saveScore(pseudo) {
+      const sanitizedPseudo = (pseudo.trim() || 'Anonyme').substring(0, 20);
+      const entry = {
+        name: sanitizedPseudo,
+        bac: bloodAlcohol,
         glasses: glassesDrunk,
-        favDrink: getFavoriteDrinkName(),
-        date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+        drinkName: DRINKS[selectedDrinkIndex].name,
+        date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
       };
 
-      saveScoreEntry(scoreEntry);
-      closeSaveModal();
-      showToast(`Taux de ${scoreEntry.bac.toFixed(2)} g/L enregistré !`);
-      openLeaderboardModal();
+      let list = getTop10();
+      list.push(entry);
+      list.sort((a, b) => b.bac - a.bac);
+      list = list.slice(0, 10);
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      openTop10Modal();
     }
 
-    function openLeaderboardModal() {
-      audio.playClick();
-      renderLeaderboard();
-      dom.modalLeaderboard.classList.remove('hidden');
-    }
+    function openTop10Modal() {
+      const list = getTop10();
+      dom.top10List.innerHTML = '';
 
-    function closeLeaderboardModal() {
-      audio.playClick();
-      dom.modalLeaderboard.classList.add('hidden');
-    }
-
-    function renderLeaderboard() {
-      const scores = getScores().slice(0, 10);
-      dom.leaderboardList.innerHTML = '';
-
-      if (scores.length === 0) {
-        dom.leaderboardList.innerHTML = `
-          <div class="text-center py-6 text-stone-500 italic text-xs">
-            Aucun score enregistré dans le Top 10.<br>Prenez un verre et enregistrez votre taux !
+      if (list.length === 0) {
+        dom.top10List.innerHTML = `
+          <div class="text-center py-8 text-stone-500 text-xs italic">
+            Aucun record enregistré pour le moment.<br>Soyez le premier à poser votre nom !
           </div>
         `;
-        return;
+      } else {
+        list.forEach((item, index) => {
+          const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+          const isTop3 = index < 3;
+
+          const row = document.createElement('div');
+          row.className = `flex items-center justify-between p-2 rounded-xl border ${
+            isTop3 ? 'bg-amber-950/40 border-amber-600/50' : 'bg-stone-950/60 border-stone-800'
+          }`;
+
+          row.innerHTML = `
+            <div class="flex items-center gap-2 min-w-0 pr-1">
+              <span class="text-sm font-bold w-6 text-center flex-shrink-0">${medal}</span>
+              <div class="min-w-0">
+                <span class="text-xs font-black text-stone-100 truncate block leading-tight">${item.name}</span>
+                <span class="text-[9px] text-stone-400 font-medium">${item.glasses} verres • ${item.drinkName}</span>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0 pl-1">
+              <span class="text-xs font-black text-rose-400 block leading-tight">${item.bac.toFixed(2)} g/L</span>
+              <span class="text-[8px] text-stone-500 font-mono">${item.date}</span>
+            </div>
+          `;
+          dom.top10List.appendChild(row);
+        });
       }
 
-      scores.forEach((item, index) => {
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-        const row = document.createElement('div');
-        row.className = `flex items-center justify-between p-2 rounded-xl border ${
-          index < 3 ? 'bg-rose-950/30 border-rose-500/40' : 'bg-stone-950/60 border-stone-800'
-        }`;
-        row.innerHTML = `
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="font-black text-sm w-5 text-center ${index < 3 ? 'text-amber-400' : 'text-stone-500'}">${medal}</span>
-            <div class="truncate">
-              <div class="font-bold text-white text-xs truncate max-w-[130px]">${escapeHTML(item.name)}</div>
-              <div class="text-[9px] text-stone-400 truncate">${item.glasses} verres • ${escapeHTML(item.favDrink || 'Bière')}</div>
-            </div>
-          </div>
-          <div class="text-right pl-2 shrink-0">
-            <div class="font-mono font-black text-rose-400 text-sm">${Number(item.bac).toFixed(2)} g/L</div>
-          </div>
-        `;
-        dom.leaderboardList.appendChild(row);
-      });
+      dom.modalTop10.classList.remove('hidden');
     }
 
+    /* ==========================================================================
+       12. RÉINITIALISATION DU JEU
+       ========================================================================== */
     function resetGame() {
-      glassesDrunk = 0;
+      stopTimer();
+      stopDrinkingAction();
+
+      if (nauseaInterval) {
+        clearInterval(nauseaInterval);
+        nauseaInterval = null;
+      }
+      isNauseous = false;
+      dom.nauseaPanel.classList.add('hidden');
+
+      timeRemaining = TOTAL_TIME;
       bloodAlcohol = 0.00;
-      consecutiveChugStreak = 0;
-      releasesCountDuringGlass = 0;
-      lastDrinkFinishTimestamp = 0;
-      Object.keys(drinkCounts).forEach(k => drinkCounts[k] = 0);
+      glassesDrunk = 0;
+      currentDrinkRemaining = 100;
+      consecCulSecCount = 0;
+      startedThisGlassAt = null;
+      pausedDuringThisGlass = false;
 
-      dom.glassesCount.innerText = '0';
-      dom.bacCount.innerHTML = `0.00 <span class="text-[10px] text-rose-300">g/L</span>`;
-      updateSpeedIndicator();
+      dom.displayTimer.textContent = "01:00";
+      dom.displayTimer.classList.remove('text-rose-400');
+      dom.timerBox.classList.remove('border-rose-500', 'bg-rose-950/70', 'animate-pulse');
 
-      applyDrunkenEffects();
-      resetGlassFill();
-      closeLeaderboardModal();
-      showToast('Nouvelle dégustation ! 🍻');
+      dom.modalGameOver.classList.add('hidden');
+      dom.modalTop10.classList.add('hidden');
+
+      updateDashboard();
+      updateDrinkUI();
     }
 
-    function showToast(msg) {
-      dom.toast.innerText = msg;
-      dom.toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-3');
-      dom.toast.classList.add('opacity-100', 'translate-y-0');
+    /* ==========================================================================
+       13. ÉCOUTEURS D'ÉVÉNEMENTS
+       ========================================================================== */
+    function initEvents() {
+      dom.drinkCards.forEach(card => {
+        card.addEventListener('click', () => {
+          const idx = parseInt(card.dataset.index, 10);
+          if (selectedDrinkIndex !== idx) {
+            selectedDrinkIndex = idx;
+            currentDrinkRemaining = 100;
+            startedThisGlassAt = null;
+            pausedDuringThisGlass = false;
+            updateDrinkUI();
+          }
+        });
+      });
 
-      setTimeout(() => {
-        dom.toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-3');
-        dom.toast.classList.remove('opacity-100', 'translate-y-0');
-      }, 2300);
-    }
-
-    function escapeHTML(str) {
-      return (str || '').replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-      }[tag] || tag));
-    }
-
-    /* ÉVÉNEMENTS */
-    function setupEventListeners() {
       const btn = dom.btnDrink;
+      btn.addEventListener('mousedown', startDrinkingAction);
+      window.addEventListener('mouseup', stopDrinkingAction);
 
-      // Souris desktop
-      btn.addEventListener('mousedown', startDrinking);
-      window.addEventListener('mouseup', stopDrinking);
-      btn.addEventListener('mouseleave', stopDrinking);
-
-      // Tactile mobile
-      btn.addEventListener('touchstart', startDrinking, { passive: false });
-      btn.addEventListener('touchend', stopDrinking, { passive: false });
-      btn.addEventListener('touchcancel', stopDrinking, { passive: false });
-
-      // Boutons du bas
-      dom.btnTop10.addEventListener('click', openLeaderboardModal);
-      dom.btnSaveScore.addEventListener('click', () => {
-        if (glassesDrunk === 0 && bloodAlcohol === 0) {
-          showToast('Prenez au moins un premier verre avant d\'enregistrer ! 🍻');
-          return;
+      // Détection stricte PC : si la souris quitte la surface du bouton, l'action s'arrête net
+      btn.addEventListener('mouseleave', () => {
+        if (isDrinking) {
+          stopDrinkingAction();
         }
-        openSaveModal();
       });
-
-      // Contrôle de longueur pseudo en direct (max 20 caractères)
-      dom.playerNickname.addEventListener('input', (e) => {
-        let val = e.target.value;
-        if (val.length > 20) {
-          e.target.value = val.slice(0, 20);
+      btn.addEventListener('pointerleave', () => {
+        if (isDrinking) {
+          stopDrinkingAction();
         }
-        dom.charCounter.innerText = `${e.target.value.length} / 20`;
-        dom.errorMessage.classList.add('hidden');
       });
 
-      dom.formSaveScore.addEventListener('submit', (e) => {
-        e.preventDefault();
-        handleFormSubmit();
-      });
+      btn.addEventListener('touchstart', (e) => {
+        startDrinkingAction(e);
+      }, { passive: false });
 
-      dom.btnCancelModal.addEventListener('click', closeSaveModal);
-      dom.btnCloseLeaderboard.addEventListener('click', closeLeaderboardModal);
-      dom.btnNewGame.addEventListener('click', resetGame);
+      // Détection stricte Mobile : si le doigt glisse hors de la bounding box du bouton, stop immédiat
+      btn.addEventListener('touchmove', (e) => {
+        if (!isDrinking) return;
 
-      dom.btnClearScores.addEventListener('click', () => {
-        if (getScores().length === 0) return;
-        localStorage.removeItem(STORAGE_KEY);
-        renderLeaderboard();
-        showToast('Historique effacé.');
-      });
+        if (e.touches && e.touches.length > 0) {
+          const touch = e.touches[0];
+          const rect = btn.getBoundingClientRect();
+
+          const isInside = (
+            touch.clientX >= rect.left &&
+            touch.clientX <= rect.right &&
+            touch.clientY >= rect.top &&
+            touch.clientY <= rect.bottom
+          );
+
+          if (!isInside) {
+            stopDrinkingAction();
+          }
+        }
+      }, { passive: false });
+
+      window.addEventListener('touchend', stopDrinkingAction);
+      window.addEventListener('touchcancel', stopDrinkingAction);
 
       window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          if (!dom.modalSave.classList.contains('hidden')) closeSaveModal();
-          if (!dom.modalLeaderboard.classList.contains('hidden')) closeLeaderboardModal();
+        if (e.code === 'Space' && !e.repeat && document.activeElement !== dom.inputPseudo) {
+          e.preventDefault();
+          startDrinkingAction();
         }
       });
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') {
+          stopDrinkingAction();
+        }
+      });
+
+      dom.inputPseudo.addEventListener('input', () => {
+        dom.pseudoCounter.textContent = `${dom.inputPseudo.value.length}/20`;
+      });
+
+      dom.btnSaveScore.addEventListener('click', () => {
+        saveScore(dom.inputPseudo.value);
+        dom.modalGameOver.classList.add('hidden');
+      });
+
+      dom.btnSkipSave.addEventListener('click', () => {
+        resetGame();
+      });
+
+      dom.btnRestart.addEventListener('click', resetGame);
+      dom.btnTop10.addEventListener('click', openTop10Modal);
+      dom.btnCloseTop10.addEventListener('click', () => dom.modalTop10.classList.add('hidden'));
+      dom.btnTop10Ok.addEventListener('click', () => dom.modalTop10.classList.add('hidden'));
     }
 
-    // Gestion hauteur réelle sur mobile (Chrome address bar)
-    function setAppHeight() {
-      document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
-    }
-    window.addEventListener('resize', setAppHeight);
-    window.addEventListener('orientationchange', setAppHeight);
-
-    window.addEventListener('load', () => {
-      setAppHeight();
-      renderDrinkSelector();
-      updateGlassVisuals();
-      resetGlassFill();
-      updateSpeedIndicator();
-      setupEventListeners();
+    window.addEventListener('DOMContentLoaded', () => {
+      updateDrinkUI();
+      updateDashboard();
+      initEvents();
     });
   </script>
 </body>
